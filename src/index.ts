@@ -7,14 +7,14 @@ let initial = (extensionAPI: any) => {
   };
 };
 
-let initialed: Function;
+let initialed = () => { };
 
 function onload({ extensionAPI }: any) {
   initialed = initial(extensionAPI);
 }
 
 function onunload() {
-  initialed?.();
+  initialed();
 }
 
 if (!process.env.ROAM_DEPOT) {
