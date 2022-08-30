@@ -1,1 +1,2 @@
-npx roamjs-scripts build --marketplace
+npm install --save --legacy-peer-deps
+npm run build
