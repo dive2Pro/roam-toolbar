@@ -1,6 +1,6 @@
 {
   "name": "@dive2pro/roam-toolbar",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "description": "editor toolbar",
   "main": "dist/extension.js",
   "scripts": {
