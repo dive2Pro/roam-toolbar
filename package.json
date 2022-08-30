@@ -1,5 +1,5 @@
 {
-  "name": "roam-toolbar",
+  "name": "@dive2pro/roam-toolbar",
   "version": "1.0.0",
   "description": "editor toolbar",
   "main": "dist/extension.js",
@@ -10,15 +10,15 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/dive2Pro/roam-toolbar"
+    "url": "git+https://github.com/dive2Pro/roam-toolbar.git"
   },
   "keywords": [],
-  "author": "",
+  "author": "hyc",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/dive2Pro/roam-toolbar/issues"
   },
-  "homepage": "",
+  "homepage": "https://github.com/dive2Pro/roam-toolbar#readme",
   "dependencies": {
     "arrive": "^2.4.1",
     "roamjs-scripts": "^0.21.3"
