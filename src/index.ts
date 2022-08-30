@@ -17,7 +17,10 @@ function onunload() {
   initialed?.();
 }
 
-export default {
-  onload,
-  onunload,
-};
+if (!process.env.ROAM_DEPOT) {
+  initToolbar()
+}
+  export default {
+    onload,
+    onunload,
+  };
