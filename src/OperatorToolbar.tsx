@@ -309,41 +309,45 @@ export function initToolbar() {
           </Popover>
           <EmbedTransform />
           <PathEmbedTransform />
-          <Button
-            onClick={highlightToggle.toggle}
-            intent={isIntent(highlightToggle.isActive)}
-            icon="highlight"
-          />
-          <Tooltip
-            content={
-              <>
-                <Icon icon="key-command"></Icon>+ B
-              </>
-            }
-            position={Position.TOP}
-            openOnTargetFocus={false}
-          >
+
+          <Tooltip content={"highlight"} position={Position.TOP}>
+            <Button
+              onClick={highlightToggle.toggle}
+              intent={isIntent(highlightToggle.isActive)}
+              icon="highlight"
+            />
+          </Tooltip>
+          <Tooltip content={"bold"} position={Position.TOP}>
             <Button
               onClick={boldingToggle.toggle}
               intent={isIntent(boldingToggle.isActive)}
               icon="bold"
             />
           </Tooltip>
-          <Button
-            onClick={codeToggle.toggle}
-            intent={isIntent(codeToggle.isActive)}
-            icon="code"
-          />
-          <Button
-            onClick={italicToggle.toggle}
-            intent={isIntent(italicToggle.isActive)}
-            icon="italic"
-          />
-          <Button
-            onClick={strikethroughToggle.toggle}
-            intent={isIntent(strikethroughToggle.isActive)}
-            icon="strikethrough"
-          />
+
+          <Tooltip content={"code"} position={Position.TOP}>
+            <Button
+              onClick={codeToggle.toggle}
+              intent={isIntent(codeToggle.isActive)}
+              icon="code"
+            />
+          </Tooltip>
+
+          <Tooltip content={"italic"} position={Position.TOP}>
+            <Button
+              onClick={italicToggle.toggle}
+              intent={isIntent(italicToggle.isActive)}
+              icon="italic"
+            />
+          </Tooltip>
+
+          <Tooltip content={"strikethrough"} position={Position.TOP}>
+            <Button
+              onClick={strikethroughToggle.toggle}
+              intent={isIntent(strikethroughToggle.isActive)}
+              icon="strikethrough"
+            />
+          </Tooltip>
         </ButtonGroup>
       );
     }
