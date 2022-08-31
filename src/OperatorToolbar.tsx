@@ -18,11 +18,40 @@ const delay = async (m: number) =>
   new Promise((resolve) => setTimeout(resolve, m));
 
 const INPUT_SELECTOR = "textarea.rm-block-input";
-const KEYS = [..."*_^~`".split("")];
+const KEYS = [..."*_^~`[]()".split("")];
 
 const isIntent = (b: boolean, target = "primary"): Intent =>
   (b ? target : "none") as Intent;
 
+const isStartAndEndWith = (
+  source: string,
+  tag: string | [string, string],
+  length = 2
+) => {
+  let started = false;
+  const ptag = Array.isArray(tag) ? tag[0] : tag;
+  const ltag = Array.isArray(tag) ? tag[1] : tag;
+  for (let i = 0, l = source.length - 1; i < l; i++, l--) {
+    if (KEYS.every((k) => k !== source[i])) {
+      return -1;
+    }
+    if (source[i] === ptag && source[l] === ltag) {
+      if (length === 1) {
+        return i;
+      }
+      if (started) {
+        return i - 1;
+      } else {
+        started = true;
+      }
+    } else if (!started) {
+      continue;
+    } else {
+      return -1;
+    }
+  }
+  return -1;
+};
 export function initToolbar() {
   let stop = () => {};
   console.log("initToolbar");
@@ -51,36 +80,15 @@ export function initToolbar() {
 
           props.onAfter(afterText);
         };
-        const isStartAndEndWith = (source: string, tag: string, length = 2) => {
-          let started = false;
-          for (let i = 0, l = source.length - 1; i < l; i++, l--) {
-            if (KEYS.every((k) => k !== source[i])) {
-              return -1;
-            }
-            if (source[i] === tag && source[l] === tag) {
-              if (length === 1) {
-                return i;
-              }
-              if (started) {
-                return i - 1;
-              } else {
-                started = true;
-              }
-            } else if (!started) {
-              continue;
-            } else {
-              return -1;
-            }
-          }
-          return -1;
-        };
 
         const activeIndex = isStartAndEndWith(source, tag, length);
         const isActive = activeIndex !== -1;
         const affix = new Array(length).fill(tag).join("");
         return {
           isActive,
-          toggle: () => {
+          toggle: (e: React.MouseEvent) => {
+            e.preventDefault();
+            e.stopPropagation();
             isActive
               ? unstyle()
               : props.onAfter(`${affix}${props.text}${affix}`);
@@ -123,7 +131,7 @@ export function initToolbar() {
         }
       };
       const quotation = async () => {
-        let content = block[":block/string"];
+        let content = t.value;
         if (isQuotation()) {
           content = content.substring(2);
           selectionStart -= 2;
@@ -151,6 +159,87 @@ export function initToolbar() {
       const toPlain = () => {
         unHeader();
         unQuotation();
+      };
+
+      const EmbedTransform = () => {
+        if (
+          isStartAndEndWith(props.text, ["[", "]"]) > -1 ||
+          isStartAndEndWith(props.text, ["(", ")"]) > -1
+        ) {
+          return (
+            <Tooltip content="Block Embed">
+              <Button
+                icon="new-layers"
+                onClick={() => {
+                  props.onAfter(`{{[[embed]]: ${props.text}}}`);
+                }}
+              ></Button>
+            </Tooltip>
+          );
+        }
+        if (isStartAndEndWith(props.text, ["{", "}"]) > -1) {
+          return null;
+        }
+        if (
+          !props.text.startsWith("{{embed:") &&
+          !props.text.startsWith("{{[[embed]]:")
+        ) {
+          return null;
+        }
+
+        return (
+          <Tooltip content="Block Reference">
+            <Button
+              icon="layer"
+              onClick={() => {
+                const index = props.text.indexOf(":");
+                props.onAfter(
+                  props.text.substring(index + 1, props.text.length - 2).trim()
+                );
+              }}
+            ></Button>
+          </Tooltip>
+        );
+      };
+
+      const PathEmbedTransform = () => {
+        `{{embed-path: ((CfXXH7HJp))}}`;
+        if (isStartAndEndWith(props.text, ["(", ")"]) > -1) {
+          return (
+            <Tooltip content="Block Embed Path">
+              <Button
+                icon="new-layer"
+                onClick={() => {
+                  props.onAfter(`{{[[embed-path]]: ${props.text}}}`);
+                }}
+              ></Button>
+            </Tooltip>
+          );
+        }
+
+        if (isStartAndEndWith(props.text, ["{", "}"]) > -1) {
+          return null;
+        }
+
+        if (
+          !props.text.startsWith("{{embed-path:") &&
+          !props.text.startsWith("{{[[embed-path]]:")
+        ) {
+          return null;
+        }
+        return (
+          <Tooltip content="Block Reference">
+            <Button
+              icon="layer"
+              onClick={() => {
+                const index = props.text.indexOf(":");
+                props.onAfter(
+                  props.text.substring(index + 1, props.text.length - 2).trim()
+                );
+              }}
+            ></Button>
+          </Tooltip>
+        );
       };
 
       return (
@@ -202,10 +291,24 @@ export function initToolbar() {
               </>
             }
           >
-            <Button icon="header">
+            <Button
+              icon={
+                isHeading(1)
+                  ? "header-one"
+                  : isHeading(2)
+                  ? "header-two"
+                  : isHeading(3)
+                  ? "header-three"
+                  : isQuotation()
+                  ? "citation"
+                  : "paragraph"
+              }
+            >
               <Icon icon="chevron-down" size={14} style={{ color: "grey" }} />
             </Button>
           </Popover>
+          <EmbedTransform />
+          <PathEmbedTransform />
           <Button
             onClick={highlightToggle.toggle}
             intent={isIntent(highlightToggle.isActive)}
