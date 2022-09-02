@@ -369,13 +369,13 @@ export function initToolbar() {
       if (e.composed) { 
         return
       }
-      const xy = getCursorXY(t, t.selectionStart);
-      el.style.top = xy.y - 35 + "px";
-      el.style.left = xy.x - 0 + "px";
       ({ selectionStart, selectionEnd } = t);
       if (selectionStart === selectionEnd) {
         return ReactDOM.unmountComponentAtNode(el);
       }
+      const xy = getCursorXY(t, t.selectionStart);
+      el.style.top = xy.y - 35 + "px";
+      el.style.left = xy.x - 0 + "px";
       const fullContent = t.value;
       const text = selection.toString();
       ReactDOM.render(
