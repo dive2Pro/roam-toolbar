@@ -2,16 +2,16 @@
 
 ## style selection
 
-![](Toolbar%20demo.gif)
+![](https://github.com/dive2Pro/roam-toolbar/blob/main/Toolbar%20demo.gif)
 
 ## reference transforms
 
-![](Toolbar%20reference%20transform.gif)
+![](https://github.com/dive2Pro/roam-toolbar/blob/main/Toolbar%20reference%20transform.gif)
 
 
 ## block transforms
 
-![](Toolbar%20block%20transform.gif)
+![](https://github.com/dive2Pro/roam-toolbar/blob/main/Toolbar%20block%20transform.gif)
 
 
 you can try it before avaiable on roam-depot
