@@ -1,6 +1,18 @@
 # Roam toolbar 
 
+## style selection
+
 ![](Toolbar%20demo.gif)
+
+## reference transforms
+
+![](Toolbar%20reference%20transform.gif)
+
+
+## block transforms
+
+![](Toolbar%20block%20transform.gif)
+
 
 you can try it before avaiable on roam-depot
 
