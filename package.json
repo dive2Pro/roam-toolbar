@@ -20,10 +20,10 @@
   },
   "homepage": "https://github.com/dive2Pro/roam-toolbar#readme",
   "dependencies": {
-    "arrive": "^2.4.1",
-    "roamjs-scripts": "^0.21.3"
+    "arrive": "^2.4.1"
   },
   "devDependencies": {
+    "roamjs-scripts": "^0.21.3",
     "@blueprintjs/core": "3.54.0",
     "@blueprintjs/select": "3.19.1",
     "@types/arrive": "^2.4.1",

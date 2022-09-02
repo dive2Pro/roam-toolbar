@@ -1,4 +1,4 @@
-require("arrive");
+import "arrive";
 import ReactDOM from "react-dom";
 import {
   Button,
@@ -87,8 +87,6 @@ export function initToolbar() {
         return {
           isActive,
           toggle: (e: React.MouseEvent) => {
-            e.preventDefault();
-            e.stopPropagation();
             isActive
               ? unstyle()
               : props.onAfter(`${affix}${props.text}${affix}`);
@@ -367,7 +365,10 @@ export function initToolbar() {
       return block[":block/heading"] === undefined && !isQuotation();
     };
 
-    const onSelectionChange = () => {
+    const onSelectionChange = (e: Event) => {
+      if (e.composed) { 
+        return
+      }
       const xy = getCursorXY(t, t.selectionStart);
       el.style.top = xy.y - 35 + "px";
       el.style.left = xy.x - 0 + "px";
@@ -426,11 +427,15 @@ export function initToolbar() {
   const el = document.createElement("div");
   document.body.appendChild(el);
   document.arrive(INPUT_SELECTOR, start);
+  document.leave(INPUT_SELECTOR, stop);
   return () => {
     try {
       stop();
       document.body.removeChild(el);
+      document.unbindLeave(INPUT_SELECTOR, stop);
       document.unbindArrive(INPUT_SELECTOR, start);
-    } catch (e) {}
+    } catch (e) {
+      console.error(e)
+    }
   };
 }
