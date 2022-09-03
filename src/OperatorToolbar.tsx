@@ -57,10 +57,9 @@ export function initToolbar() {
   console.log("initToolbar");
   let selection = window.getSelection();
   const start = (t: HTMLInputElement) => {
-    el.style.position = "fixed";
+    stop();
     let { selectionStart, selectionEnd } = t;
     function Toolbar(props: {
-      position: { top: number; left: number };
       text: string;
       onAfter: (t: string, selection?: { start: number; end: number }) => void;
     }) {
@@ -364,24 +363,28 @@ export function initToolbar() {
     const isPlain = () => {
       return block[":block/heading"] === undefined && !isQuotation();
     };
-
+    const changeElPosition = () => {
+      requestIdleCallback(() => {
+        const xy = getCursorXY(t, t.selectionStart);
+        el.style.top = xy.y - 35 + "px";
+        el.style.left = xy.x - 0 + "px";
+      });
+    };
     const onSelectionChange = (e: Event) => {
-      if (e.composed) { 
-        return
+      if (e.composed) {
+        return;
       }
       ({ selectionStart, selectionEnd } = t);
-      if (selectionStart === selectionEnd) {
-        return ReactDOM.unmountComponentAtNode(el);
+      if (selectionStart === selectionEnd || !t) {
+        ReactDOM.unmountComponentAtNode(el);
+        return;
       }
-      const xy = getCursorXY(t, t.selectionStart);
-      el.style.top = xy.y - 35 + "px";
-      el.style.left = xy.x - 0 + "px";
+      changeElPosition();
       const fullContent = t.value;
       const text = selection.toString();
       ReactDOM.render(
         <Toolbar
           text={text}
-          position={{ top: xy.y, left: xy.x }}
           onAfter={async (text, selection = { start: 0, end: 0 }) => {
             const afterString =
               fullContent.substring(0, selectionStart) +
@@ -404,38 +407,28 @@ export function initToolbar() {
         el
       );
     };
-
-    // const onMouseUp = () => {
-    //   if (!selection.isCollapsed) {
-    // el.style.display = "block";
-    //   }
-    // };
-
-    // const onMouseDown = () => {
-    //   el.style.display = "none";
-    // };
-
-    // document.addEventListener("mousedown", onMouseDown);
-    // document.addEventListener("mouseup", onMouseUp);
     document.addEventListener("selectionchange", onSelectionChange);
     stop = () => {
+      selectionStart = selectionEnd = 0;
       document.removeEventListener("selectionchange", onSelectionChange);
-      //   document.removeEventListener("mouseup", onMouseUp);
-      //   document.removeEventListener("mousedown", onMouseDown);
     };
   };
   const el = document.createElement("div");
+  el.style.position = "fixed";
   document.body.appendChild(el);
   document.arrive(INPUT_SELECTOR, start);
-  document.leave(INPUT_SELECTOR, stop);
+  const stopFactory = () => {
+    stop()
+  }
+  // document.leave(INPUT_SELECTOR, stopFactory);
   return () => {
     try {
-      stop();
+      stopFactory()
       document.body.removeChild(el);
-      document.unbindLeave(INPUT_SELECTOR, stop);
+      // document.unbindLeave(INPUT_SELECTOR, stopFactory);
       document.unbindArrive(INPUT_SELECTOR, start);
     } catch (e) {
-      console.error(e)
+      console.error(e);
     }
   };
 }
