@@ -364,11 +364,9 @@ export function initToolbar() {
       return block[":block/heading"] === undefined && !isQuotation();
     };
     const changeElPosition = () => {
-      requestIdleCallback(() => {
-        const xy = getCursorXY(t, t.selectionStart);
-        el.style.top = xy.y - 35 + "px";
-        el.style.left = xy.x - 0 + "px";
-      });
+      const xy = getCursorXY(t, t.selectionStart);
+      el.style.top = xy.y - 35 + "px";
+      el.style.left = xy.x - 0 + "px";
     };
     const onSelectionChange = (e: Event) => {
       if (e.composed) {
@@ -418,12 +416,12 @@ export function initToolbar() {
   document.body.appendChild(el);
   document.arrive(INPUT_SELECTOR, start);
   const stopFactory = () => {
-    stop()
-  }
+    stop();
+  };
   // document.leave(INPUT_SELECTOR, stopFactory);
   return () => {
     try {
-      stopFactory()
+      stopFactory();
       document.body.removeChild(el);
       // document.unbindLeave(INPUT_SELECTOR, stopFactory);
       document.unbindArrive(INPUT_SELECTOR, start);
