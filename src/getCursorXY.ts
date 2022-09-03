@@ -1,39 +1,3 @@
-
-const attributes = [
-  "borderBottomWidth",
-  "borderLeftWidth",
-  "borderRightWidth",
-  "borderTopStyle",
-  "borderRightStyle",
-  "borderBottomStyle",
-  "borderLeftStyle",
-  "borderTopWidth",
-  "boxSizing",
-  "fontFamily",
-  "fontSize",
-  "fontWeight",
-  "height",
-  "letterSpacing",
-  "lineHeight",
-  "marginBottom",
-  "marginLeft",
-  "marginRight",
-  "marginTop",
-  "outlineWidth",
-  "overflow",
-  "overflowX",
-  "overflowY",
-  "paddingBottom",
-  "paddingLeft",
-  "paddingRight",
-  "paddingTop",
-  "textAlign",
-  "textOverflow",
-  "textTransform",
-  "whiteSpace",
-  "wordBreak",
-  "wordWrap",
-];
 /**
  * returns x, y coordinates for absolute positioning of a span within a given text input
  * at a given selection point
@@ -48,7 +12,7 @@ export const getCursorXY = (input: HTMLInputElement, selectionPoint: number) => 
   const div = document.createElement("div");
   // get the computed style of the input and clone it onto the dummy element
   const copyStyle = getComputedStyle(input);
-  for (const prop of attributes) {
+  for (const prop of copyStyle) {
     // @ts-ignore
     div.style[prop] = copyStyle[prop];
   }
@@ -81,7 +45,7 @@ export const getCursorXY = (input: HTMLInputElement, selectionPoint: number) => 
   // NOTE:: can comment this out for debugging purposes if you want to see where that span is rendered
   document.body.removeChild(div);
   // return an object with the x and y of the caret. account for input positioning so that you don't need to wrap the input
-    // console.log(inputY, spanY, " - x - x", spanX, spanY, inputY);
+  // console.log(inputY, spanY, " - x - x", spanX, spanY);
   return {
     x: inputX + spanX,
     y: inputY + spanY,
