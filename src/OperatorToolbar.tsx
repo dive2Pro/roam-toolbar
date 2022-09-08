@@ -10,10 +10,12 @@ import {
   Menu,
   MenuItem,
   Popover,
+  Divider,
 } from "@blueprintjs/core";
-import React from "react";
+import React, { useState } from "react";
 import { getCursorXY } from "./getCursorXY";
 import { getBlock, updateStr } from "./queries";
+import { getVisibleCustomWorkflows, PREDEFINED_REGEX } from "./smartblocks";
 const delay = async (m: number) =>
   new Promise((resolve) => setTimeout(resolve, m));
 
@@ -52,6 +54,7 @@ const isStartAndEndWith = (
   }
   return -1;
 };
+
 export function initToolbar() {
   let stop = () => {};
   console.log("initToolbar");
@@ -59,6 +62,89 @@ export function initToolbar() {
   const start = (t: HTMLInputElement) => {
     stop();
     let { selectionStart, selectionEnd } = t;
+    const reFocus = async () => {
+      await window.roamAlphaAPI.ui.setBlockFocusAndSelection({
+        location: focusedBlock,
+        selection: {
+          start: selectionStart,
+          end: selectionEnd,
+        },
+      });
+      block = getBlock(focusedBlock["block-uid"]);
+    };
+
+    function Smartblocks(props: { uid: string }) {
+      const [workflows] = useState(() => {
+        return getVisibleCustomWorkflows();
+      });
+
+      const [activeIndex, setActiveIndex] = useState(-1);
+      const onSelect = (i: number) => {
+        window.roamjs.extension.smartblocks.triggerSmartblock({
+          srcName: workflows[i].name,
+          targetUid: props.uid,
+        });
+      };
+
+      if (workflows.length <= 0) {
+        return null;
+      }
+
+      return (
+        <Popover
+          interactionKind="click"
+          onClose={reFocus}
+          content={
+            <Menu>
+              {workflows.map((wf, i) => {
+                return (
+                  <MenuItem
+                    key={wf.uid}
+                    data-uid={wf.uid}
+                    data-name={wf.name}
+                    text={
+                      <>
+                        <img
+                          src={
+                            PREDEFINED_REGEX.test(wf.uid)
+                              ? "https://raw.githubusercontent.com/dvargas92495/roamjs-smartblocks/main/src/img/gear.png"
+                              : "https://raw.githubusercontent.com/dvargas92495/roamjs-smartblocks/main/src/img/lego3blocks.png"
+                          }
+                          alt={""}
+                          width={15}
+                          style={{ marginRight: 4 }}
+                        />
+                        {wf.name
+                          .split(/<b>(.*?)<\/b>/)
+                          .map((part, i) =>
+                            i % 2 === 1 ? (
+                              <b key={i}>{part}</b>
+                            ) : (
+                              <span key={i}>{part}</span>
+                            )
+                          )}
+                      </>
+                    }
+                    active={i === activeIndex}
+                    onMouseEnter={() => setActiveIndex(i)}
+                    onClick={() => onSelect(i)}
+                  />
+                );
+              })}
+            </Menu>
+          }
+        >
+          <Button
+            icon={
+              <img
+                src="https://raw.githubusercontent.com/8bitgentleman/roam-depot-mobile-bottombar/main/icon.png"
+                style={{ height: 16, width: 16 }}
+              />
+            }
+          />
+        </Popover>
+      );
+    }
     function Toolbar(props: {
       text: string;
       onAfter: (t: string, selection?: { start: number; end: number }) => void;
@@ -109,16 +195,6 @@ export function initToolbar() {
       const strikethroughToggle = styleModeToggle(props.text, "~");
 
       const blockMemu = () => {};
-      const reFocus = async () => {
-        await window.roamAlphaAPI.ui.setBlockFocusAndSelection({
-          location: focusedBlock,
-          selection: {
-            start: selectionStart,
-            end: selectionEnd,
-          },
-        });
-        block = getBlock(focusedBlock["block-uid"]);
-      };
       const unHeader = () => {
         headering(0);
       };
@@ -345,6 +421,8 @@ export function initToolbar() {
               icon="strikethrough"
             />
           </Tooltip>
+          <Divider />
+          <Smartblocks uid={focusedBlock["block-uid"]} />
         </ButtonGroup>
       );
     }

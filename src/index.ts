@@ -7,8 +7,7 @@ let initial = (extensionAPI: any) => {
   };
 };
 
-let initialed = () => { };
-
+let initialed = () => {};
 function onload({ extensionAPI }: any) {
   initialed = initial(extensionAPI);
 }
@@ -18,9 +17,9 @@ function onunload() {
 }
 
 if (!process.env.ROAM_DEPOT) {
-  initToolbar()
+  initToolbar();
 }
-  export default {
-    onload,
-    onunload,
-  };
+export default {
+  onload,
+  onunload,
+};
