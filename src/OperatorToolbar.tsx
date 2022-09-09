@@ -55,7 +55,7 @@ const isStartAndEndWith = (
   return -1;
 };
 
-export function initToolbar() {
+export function initToolbar(switches: { smartblocks: boolean }) {
   let stop = () => {};
   console.log("initToolbar");
   let selection = window.getSelection();
@@ -93,7 +93,6 @@ export function initToolbar() {
       return (
         <Popover
           interactionKind="click"
-          onClose={reFocus}
           content={
             <Menu>
               {workflows.map((wf, i) => {
@@ -382,7 +381,7 @@ export function initToolbar() {
           </Popover>
           <EmbedTransform />
           <PathEmbedTransform />
-
+          <Divider />
           <Tooltip content={"highlight"} position={Position.TOP}>
             <Button
               onClick={highlightToggle.toggle}
@@ -421,8 +420,9 @@ export function initToolbar() {
               icon="strikethrough"
             />
           </Tooltip>
-          <Divider />
-          <Smartblocks uid={focusedBlock["block-uid"]} />
+          {switches.smartblocks ? (
+            <Smartblocks uid={focusedBlock["block-uid"]} />
+          ) : null}
         </ButtonGroup>
       );
     }
