@@ -12,12 +12,24 @@ import {
   Popover,
   Divider,
 } from "@blueprintjs/core";
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { getCursorXY } from "./getCursorXY";
 import { getBlock, updateStr } from "./queries";
 import { getVisibleCustomWorkflows, PREDEFINED_REGEX } from "./smartblocks";
+
 const delay = async (m: number) =>
   new Promise((resolve) => setTimeout(resolve, m));
+
+const useEvent = <T, K>(cb: (...args: T[]) => K) => {
+  const ref = useRef((...args: T[]) => {
+    return cbRef.current(...args)
+  });
+
+  const cbRef = useRef(cb);
+  cbRef.current = cb;
+
+  return ref.current;
+};
 
 const INPUT_SELECTOR = "textarea.rm-block-input";
 const KEYS = [..."*_^~`[]()".split("")];
@@ -85,16 +97,68 @@ export function initToolbar(switches: { smartblocks: boolean }) {
           targetUid: props.uid,
         });
       };
+      const [isOpen, setOpen] = useState(false);
+      const onClose = () => setOpen(false);
 
+      const keydownListener = useEvent((e: KeyboardEvent) => {
+        const count = workflows.length;
+        if (e.key === "ArrowDown") {
+          setActiveIndex((activeIndex + 1) % count);
+          e.stopPropagation();
+          e.preventDefault();
+        } else if (e.key === "ArrowUp") {
+          setActiveIndex((activeIndex - 1 + count) % count);
+          e.stopPropagation();
+          e.preventDefault();
+        } else if (e.key == "ArrowLeft" || e.key === "ArrowRight") {
+          e.stopPropagation();
+          e.preventDefault();
+        } else if (e.key === "Enter") {
+          onSelect(activeIndex);
+          e.stopPropagation();
+          e.preventDefault();
+        } else if (e.key === "Escape") {
+          onClose();
+        } else {
+        }
+        requestIdleCallback(() => {
+          document.querySelector(".bp3-active").scrollIntoView({
+            block: "nearest",
+          }); 
+        })
+      });
+      useEffect(() => {
+        const listeningEl = document;
+        listeningEl.addEventListener("keydown", keydownListener);
+        return () => {
+          listeningEl.removeEventListener("keydown", keydownListener);
+        };
+      }, [keydownListener]);
+      const menuRef = useRef<Menu>();
       if (workflows.length <= 0) {
         return null;
       }
 
       return (
         <Popover
+          isOpen={isOpen}
+          onClose={onClose}
           interactionKind="click"
+          modifiers={{
+            flip: { enabled: false },
+            preventOverflow: { enabled: false },
+          }}
+          position={Position.BOTTOM_LEFT}
+          autoFocus={false}
           content={
-            <Menu>
+            <Menu
+              className="roamjs-smartblock-menu"
+              ref={menuRef}
+              style={{
+                maxHeight: 350,
+                overflowY: "auto",
+              }}
+            >
               {workflows.map((wf, i) => {
                 return (
                   <MenuItem
@@ -134,6 +198,7 @@ export function initToolbar(switches: { smartblocks: boolean }) {
           }
         >
           <Button
+            onClick={() => setOpen(true)}
             icon={
               <img
                 src="https://raw.githubusercontent.com/8bitgentleman/roam-depot-mobile-bottombar/main/icon.png"
@@ -381,7 +446,6 @@ export function initToolbar(switches: { smartblocks: boolean }) {
           </Popover>
           <EmbedTransform />
           <PathEmbedTransform />
-          <Divider />
           <Tooltip content={"highlight"} position={Position.TOP}>
             <Button
               onClick={highlightToggle.toggle}
