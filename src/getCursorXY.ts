@@ -4,7 +4,7 @@
  * @param {object} input - the input element to obtain coordinates for
  * @param {number} selectionPoint - the selection point for the input
  */
-export const getCursorXY = (input: HTMLInputElement, selectionPoint: number) => {
+export const getCursorXY = (input: HTMLInputElement, selectionPoint: [number, number],) => {
   //   const { offsetLeft: inputX, offsetTop: inputY } = input;
   const inputX = input.getBoundingClientRect().left;
   const inputY = input.getBoundingClientRect().top;
@@ -25,7 +25,7 @@ export const getCursorXY = (input: HTMLInputElement, selectionPoint: number) => 
   const inputValue =
     input.tagName === "INPUT" ? input.value.replace(/ /g, swap) : input.value;
   // set the div content to that of the textarea up until selection
-  const textContent = inputValue.substr(0, selectionPoint);
+  const textContent = inputValue.substr(0, selectionPoint[0]);
   // set the text content of the dummy element div
   div.textContent = textContent;
   if (input.tagName === "TEXTAREA") div.style.height = "auto";
@@ -34,20 +34,21 @@ export const getCursorXY = (input: HTMLInputElement, selectionPoint: number) => 
   // create a marker element to obtain caret position
   const span = document.createElement("span");
   // give the span the textContent of remaining content so that the recreated dummy element is as close as possible
-  span.textContent = inputValue.substr(selectionPoint) || ".";
+  span.textContent = inputValue.substring(selectionPoint[0], selectionPoint[1]) || ".";
   // append the span marker to the div
   div.appendChild(span);
   // append the dummy element to the body
   document.body.appendChild(div);
   // get the marker position, this is the caret position top and left relative to the input
-  const { offsetLeft: spanX, offsetTop: spanY } = span;
+  const { offsetLeft: spanX, offsetTop: spanY, offsetHeight, } = span;
   // lastly, remove that dummy element
   // NOTE:: can comment this out for debugging purposes if you want to see where that span is rendered
   document.body.removeChild(div);
   // return an object with the x and y of the caret. account for input positioning so that you don't need to wrap the input
   // console.log(inputY, spanY, " - x - x", spanX, spanY);
+  
   return {
     x: inputX + spanX,
-    y: inputY + spanY,
+    y: inputY + spanY + offsetHeight,
   };
 };

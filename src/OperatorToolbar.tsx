@@ -127,14 +127,14 @@ export function initToolbar(switches: { smartblocks: boolean }) {
           }); 
         })
       });
+      const menuRef = useRef<Menu>();
       useEffect(() => {
-        const listeningEl = document;
+        const listeningEl = el
         listeningEl.addEventListener("keydown", keydownListener);
         return () => {
           listeningEl.removeEventListener("keydown", keydownListener);
         };
-      }, [keydownListener]);
-      const menuRef = useRef<Menu>();
+      }, [menuRef.current]);
       if (workflows.length <= 0) {
         return null;
       }
@@ -506,8 +506,8 @@ export function initToolbar(switches: { smartblocks: boolean }) {
       return block[":block/heading"] === undefined && !isQuotation();
     };
     const changeElPosition = () => {
-      const xy = getCursorXY(t, t.selectionStart);
-      el.style.top = xy.y - 35 + "px";
+      const xy = getCursorXY(t, [t.selectionStart, t.selectionEnd]);
+      el.style.top = xy.y + 5 + "px";
       el.style.left = xy.x - 0 + "px";
     };
     const onSelectionChange = (e: Event) => {
