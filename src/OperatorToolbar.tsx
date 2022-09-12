@@ -73,22 +73,26 @@ export function initToolbar(switches: { smartblocks: boolean }) {
   let stop = () => {};
   console.log("initToolbar");
   let selection = window.getSelection();
+  let prevSelection: [number, number];
   const start = (t: HTMLInputElement) => {
     stop();
+    // el.style.display = 'flex'
     let { selectionStart, selectionEnd } = t;
-    const reFocus = async () => {
+
+    const reFocus = async (position = [selectionStart, selectionEnd]) => {
+      console.log(position, ' ---')
       await window.roamAlphaAPI.ui.setBlockFocusAndSelection({
         location: focusedBlock,
         selection: {
-          start: selectionStart,
-          end: selectionEnd,
+          start: position[0],
+          end: position[1],
         },
       });
       block = getBlock(focusedBlock["block-uid"]);
     };
     function Search(props: { text: string; onChange: (s: string) => void }) {
-      const onClick = useEvent(() => {});
-      const [{ blocks, pages }] = useState(() => {
+      const [isOpen, setOpen] = useState(false);
+      const search = () => {
         return {
           blocks: searchBlocksBy(props.text).map((uid) => {
             return window.roamAlphaAPI.pull("[*]", [":block/uid", uid]);
@@ -97,6 +101,10 @@ export function initToolbar(switches: { smartblocks: boolean }) {
             return window.roamAlphaAPI.pull("[*]", [":block/uid", uid]);
           }),
         };
+      };
+      const [{ blocks, pages }, setData] = useState({
+        blocks: [],
+        pages: [],
       });
       const totalLines = [...pages, ...blocks];
       const Row = ({ index, style }: { index: number; style: object }) => {
@@ -104,7 +112,7 @@ export function initToolbar(switches: { smartblocks: boolean }) {
           return (
             <MenuItem
               style={style}
-              text={`P ${totalLines[index][":node/title"]} `}
+              text={`[[P]] ${totalLines[index][":node/title"]} `}
               prefix="P"
               onClick={() => {
                 props.onChange(`[[${totalLines[index][":node/title"]}]]`);
@@ -116,16 +124,22 @@ export function initToolbar(switches: { smartblocks: boolean }) {
           <MenuItem
             style={style}
             prefix="P"
-            text={`B ${totalLines[index][":block/string"]} `}
+            text={`((B)) ${totalLines[index][":block/string"]} `}
             onClick={() => {
               props.onChange(`((${totalLines[index][":block/uid"]}))`);
             }}
           ></MenuItem>
         );
       };
-      console.log(blocks.length, pages.length);
       return (
         <Popover
+          isOpen={isOpen}
+          onClose={() => {
+            setOpen(false);
+            setTimeout(() => {
+              reFocus(prevSelection);
+            }, 100);
+          }}
           content={
             <section>
               <div></div>
@@ -142,7 +156,13 @@ export function initToolbar(switches: { smartblocks: boolean }) {
             </section>
           }
         >
-          <Button icon="search" onClick={onClick} />
+          <Button
+            icon="search"
+            onClick={() => {
+              setData(search());
+              setOpen(true);
+            }}
+          />
         </Popover>
       );
     }
@@ -434,7 +454,7 @@ export function initToolbar(switches: { smartblocks: boolean }) {
         <ButtonGroup>
           <Popover
             interactionKind="click"
-            onClosed={reFocus}
+            onClosed={() => reFocus()}
             content={
               <>
                 <Menu>
@@ -562,18 +582,23 @@ export function initToolbar(switches: { smartblocks: boolean }) {
       el.style.top = xy.y + 5 + "px";
       el.style.left = xy.x - 0 + "px";
     };
+    const unmount = () => {
+      ReactDOM.unmountComponentAtNode(el);
+    };
     const onSelectionChange = (e: Event) => {
       if (e.composed) {
         return;
       }
       ({ selectionStart, selectionEnd } = t);
-      if (selectionStart === selectionEnd || !t) {
-        ReactDOM.unmountComponentAtNode(el);
+      const text = selection.toString();
+      if (selectionStart === selectionEnd || !t || !text) {
+        unmount();
         return;
       }
+      prevSelection = [selectionStart, selectionEnd];
       changeElPosition();
       const fullContent = t.value;
-      const text = selection.toString();
+
       ReactDOM.render(
         <Toolbar
           text={text}
@@ -610,6 +635,7 @@ export function initToolbar(switches: { smartblocks: boolean }) {
   document.body.appendChild(el);
   document.arrive(INPUT_SELECTOR, start);
   const stopFactory = () => {
+    // el.style.display = 'none'
     stop();
   };
   // document.leave(INPUT_SELECTOR, stopFactory);
