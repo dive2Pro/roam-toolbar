@@ -18,3 +18,27 @@ export const updateStr = async (uid: string, str: string) => {
     },
   });
 };
+
+export function searchBlocksBy(text: string) {
+  return (window.roamAlphaAPI.q(`
+    [
+        :find [?e ...]
+        :where
+            [?b :block/string ?t]
+            [?b :block/uid ?e]
+            [(clojure.string/includes? ?t "${text}")]
+    ]
+`) || []) as unknown as string[];
+}
+
+export function searchPagesBy(text: string) {
+  return (window.roamAlphaAPI.q(`
+    [
+        :find [?e ...]
+        :where
+            [?b :node/title ?t]
+            [?b :block/uid ?e]
+            [(clojure.string/includes? ?t "${text}")]
+    ]
+`) || []) as unknown as string[];
+}

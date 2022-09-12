@@ -11,18 +11,20 @@ import {
   MenuItem,
   Popover,
   Divider,
+  Classes,
 } from "@blueprintjs/core";
 import React, { useEffect, useRef, useState } from "react";
 import { getCursorXY } from "./getCursorXY";
-import { getBlock, updateStr } from "./queries";
+import { getBlock, searchBlocksBy, searchPagesBy, updateStr } from "./queries";
 import { getVisibleCustomWorkflows, PREDEFINED_REGEX } from "./smartblocks";
+import { VariableSizeList as List } from "react-window";
 
 const delay = async (m: number) =>
   new Promise((resolve) => setTimeout(resolve, m));
 
 const useEvent = <T, K>(cb: (...args: T[]) => K) => {
   const ref = useRef((...args: T[]) => {
-    return cbRef.current(...args)
+    return cbRef.current(...args);
   });
 
   const cbRef = useRef(cb);
@@ -84,7 +86,66 @@ export function initToolbar(switches: { smartblocks: boolean }) {
       });
       block = getBlock(focusedBlock["block-uid"]);
     };
-
+    function Search(props: { text: string; onChange: (s: string) => void }) {
+      const onClick = useEvent(() => {});
+      const [{ blocks, pages }] = useState(() => {
+        return {
+          blocks: searchBlocksBy(props.text).map((uid) => {
+            return window.roamAlphaAPI.pull("[*]", [":block/uid", uid]);
+          }),
+          pages: searchPagesBy(props.text).map((uid) => {
+            return window.roamAlphaAPI.pull("[*]", [":block/uid", uid]);
+          }),
+        };
+      });
+      const totalLines = [...pages, ...blocks];
+      const Row = ({ index, style }: { index: number; style: object }) => {
+        if (index <= pages.length - 1) {
+          return (
+            <MenuItem
+              style={style}
+              text={`P ${totalLines[index][":node/title"]} `}
+              prefix="P"
+              onClick={() => {
+                props.onChange(`[[${totalLines[index][":node/title"]}]]`);
+              }}
+            ></MenuItem>
+          );
+        }
+        return (
+          <MenuItem
+            style={style}
+            prefix="P"
+            text={`B ${totalLines[index][":block/string"]} `}
+            onClick={() => {
+              props.onChange(`((${totalLines[index][":block/uid"]}))`);
+            }}
+          ></MenuItem>
+        );
+      };
+      console.log(blocks.length, pages.length);
+      return (
+        <Popover
+          content={
+            <section>
+              <div></div>
+              <Menu>
+                <List
+                  height={550}
+                  itemCount={blocks.length + pages.length}
+                  itemSize={() => 50}
+                  width={500}
+                >
+                  {Row}
+                </List>
+              </Menu>
+            </section>
+          }
+        >
+          <Button icon="search" onClick={onClick} />
+        </Popover>
+      );
+    }
     function Smartblocks(props: { uid: string }) {
       const [workflows] = useState(() => {
         return getVisibleCustomWorkflows();
@@ -124,12 +185,12 @@ export function initToolbar(switches: { smartblocks: boolean }) {
         requestIdleCallback(() => {
           document.querySelector(".bp3-active").scrollIntoView({
             block: "nearest",
-          }); 
-        })
+          });
+        });
       });
       const menuRef = useRef<Menu>();
       useEffect(() => {
-        const listeningEl = el
+        const listeningEl = el;
         listeningEl.addEventListener("keydown", keydownListener);
         return () => {
           listeningEl.removeEventListener("keydown", keydownListener);
@@ -243,22 +304,12 @@ export function initToolbar(switches: { smartblocks: boolean }) {
         };
       };
 
-      const pageReferenceToggle = {
-        toggle: () => {
-          const text = `[[${props.text}]]`;
-          props.onAfter(text, {
-            start: text.length - 2,
-            end: text.length - 2,
-          });
-        },
-      };
       const highlightToggle = styleModeToggle(props.text, "^");
       const boldingToggle = styleModeToggle(props.text, "*");
       const italicToggle = styleModeToggle(props.text, "_");
       const codeToggle = styleModeToggle(props.text, "`", 1);
       const strikethroughToggle = styleModeToggle(props.text, "~");
 
-      const blockMemu = () => {};
       const unHeader = () => {
         headering(0);
       };
@@ -487,6 +538,7 @@ export function initToolbar(switches: { smartblocks: boolean }) {
           {switches.smartblocks ? (
             <Smartblocks uid={focusedBlock["block-uid"]} />
           ) : null}
+          {<Search text={props.text} onChange={props.onAfter} />}
         </ButtonGroup>
       );
     }
