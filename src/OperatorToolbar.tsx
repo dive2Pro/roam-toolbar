@@ -12,12 +12,22 @@ import {
   Popover,
   Divider,
   Classes,
+  CollapsibleList,
+  OverflowList,
+  MenuItemProps,
 } from "@blueprintjs/core";
 import React, { useEffect, useRef, useState } from "react";
 import { getCursorXY } from "./getCursorXY";
-import { getBlock, searchBlocksBy, searchPagesBy, updateStr } from "./queries";
+import {
+  getBlock,
+  getParentsStringFromBlockUid,
+  searchBlocksBy,
+  searchPagesBy,
+  updateStr,
+} from "./queries";
 import { getVisibleCustomWorkflows, PREDEFINED_REGEX } from "./smartblocks";
 import { VariableSizeList as List } from "react-window";
+import { PullBlock } from "roamjs-components/types";
 
 const delay = async (m: number) =>
   new Promise((resolve) => setTimeout(resolve, m));
@@ -69,6 +79,31 @@ const isStartAndEndWith = (
   return -1;
 };
 
+function SearchBlockItem(props: { block: PullBlock }) {
+  const [parents, setParents] = useState([]);
+  useEffect(() => {
+    const v = getParentsStringFromBlockUid(props.block[":block/uid"]);
+    setParents(v);
+  }, []);
+
+  return (
+    <div className="search-block-item">
+      <CollapsibleList
+        className={Classes.BREADCRUMBS}
+        visibleItemCount={parents.length}
+        visibleItemRenderer={(props: MenuItemProps) => (
+          <span className={Classes.BREADCRUMB}>{props.text}</span>
+        )}
+      >
+        {parents.map((str) => (
+          <MenuItem text={str} />
+        ))}
+      </CollapsibleList>
+      ((B)) ${props.block[":block/string"]}
+    </div>
+  );
+}
+
 export function initToolbar(switches: { smartblocks: boolean }) {
   let stop = () => {};
   console.log("initToolbar");
@@ -80,7 +115,7 @@ export function initToolbar(switches: { smartblocks: boolean }) {
     let { selectionStart, selectionEnd } = t;
 
     const reFocus = async (position = [selectionStart, selectionEnd]) => {
-      console.log(position, ' ---')
+      console.log(position, " ---");
       await window.roamAlphaAPI.ui.setBlockFocusAndSelection({
         location: focusedBlock,
         selection: {
@@ -107,6 +142,7 @@ export function initToolbar(switches: { smartblocks: boolean }) {
         pages: [],
       });
       const totalLines = [...pages, ...blocks];
+      const operated = useRef(false);
       const Row = ({ index, style }: { index: number; style: object }) => {
         if (index <= pages.length - 1) {
           return (
@@ -115,6 +151,7 @@ export function initToolbar(switches: { smartblocks: boolean }) {
               text={`[[P]] ${totalLines[index][":node/title"]} `}
               prefix="P"
               onClick={() => {
+                operated.current = true;
                 props.onChange(`[[${totalLines[index][":node/title"]}]]`);
               }}
             ></MenuItem>
@@ -124,8 +161,9 @@ export function initToolbar(switches: { smartblocks: boolean }) {
           <MenuItem
             style={style}
             prefix="P"
-            text={`((B)) ${totalLines[index][":block/string"]} `}
+            text={<SearchBlockItem block={totalLines[index]} />}
             onClick={() => {
+              operated.current = true;
               props.onChange(`((${totalLines[index][":block/uid"]}))`);
             }}
           ></MenuItem>
@@ -137,7 +175,10 @@ export function initToolbar(switches: { smartblocks: boolean }) {
           onClose={() => {
             setOpen(false);
             setTimeout(() => {
-              reFocus(prevSelection);
+              if (!operated.current) {
+                reFocus(prevSelection);
+              }
+              operated.current = false;
             }, 100);
           }}
           content={
@@ -147,7 +188,7 @@ export function initToolbar(switches: { smartblocks: boolean }) {
                 <List
                   height={550}
                   itemCount={blocks.length + pages.length}
-                  itemSize={() => 50}
+                  itemSize={(index) => (index < pages.length ? 35 : 60)}
                   width={500}
                 >
                   {Row}

@@ -1,4 +1,5 @@
 import { initToolbar } from "./OperatorToolbar";
+import "./style.css"
 
 const switches = {
   smartblocks: true,

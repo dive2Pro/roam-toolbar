@@ -42,3 +42,26 @@ export function searchPagesBy(text: string) {
     ]
 `) || []) as unknown as string[];
 }
+
+export const getParentsStringFromBlockUid = (blockUid: string) => {
+  const [ pageTitle ] = window.roamAlphaAPI.q(`
+  [
+    :find [?e ...]
+    :where
+      [?b :block/uid "${blockUid}"]
+      [?b :block/parents ?ps]
+      [?ps :node/title ?e]
+  ]
+`);
+  
+ const parents = window.roamAlphaAPI.q(`
+  [
+    :find [?e ...]
+    :where
+      [?b :block/uid "${blockUid}"]
+      [?b :block/parents ?ps]
+      [?ps :block/string ?e]
+  ]
+`);
+  return [pageTitle, ...parents]
+};

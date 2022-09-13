@@ -1,0 +1,21 @@
+.search-block-item .bp3-breadcrumb {
+    font-size: 12px ;
+}
+
+.search-block-item .bp3-collapse-list.bp3-breadcrumbs{
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+}
+
+
+.search-block-item .bp3-collapse-list.bp3-breadcrumbs li{
+    display: inline-flex;
+}
+
+.search-block-item .bp3-collapse-list.bp3-breadcrumbs li span{
+    max-width: 120px;
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
