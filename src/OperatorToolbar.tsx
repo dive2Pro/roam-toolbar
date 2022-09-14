@@ -28,6 +28,7 @@ import {
 import { getVisibleCustomWorkflows, PREDEFINED_REGEX } from "./smartblocks";
 import { VariableSizeList as List } from "react-window";
 import { PullBlock } from "roamjs-components/types";
+import { HighlightText } from "./highlight_spans";
 
 const delay = async (m: number) =>
   new Promise((resolve) => setTimeout(resolve, m));
@@ -79,7 +80,7 @@ const isStartAndEndWith = (
   return -1;
 };
 
-function SearchBlockItem(props: { block: PullBlock }) {
+function SearchBlockItem(props: { block: PullBlock, highlight: string }) {
   const [parents, setParents] = useState([]);
   useEffect(() => {
     const v = getParentsStringFromBlockUid(props.block[":block/uid"]);
@@ -99,7 +100,10 @@ function SearchBlockItem(props: { block: PullBlock }) {
           <MenuItem text={str} />
         ))}
       </CollapsibleList>
-      {props.block[":block/string"]}
+      <HighlightText
+        highlight={props.highlight}
+        text={props.block[":block/string"]}
+      />
     </div>
   );
 }
@@ -143,25 +147,33 @@ export function initToolbar(switches: { smartblocks: boolean }) {
       });
       const totalLines = [...pages, ...blocks];
       const operated = useRef(false);
-      const openOnSidebar = (uid: string, type: 'outline' | 'block') => {
+      const openOnSidebar = (uid: string, type: "outline" | "block") => {
         window.roamAlphaAPI.ui.rightSidebar.addWindow({
           window: {
-              "block-uid": uid,
-              type
-          }
-        })
-      }
+            "block-uid": uid,
+            type,
+          },
+        });
+      };
       const Row = ({ index, style }: { index: number; style: object }) => {
         if (index <= pages.length - 1) {
           return (
             <MenuItem
               style={style}
-              text={`${totalLines[index][":node/title"]} `}
+              text={
+                <HighlightText
+                  highlight={props.text}
+                  text={totalLines[index][":node/title"]}
+                />
+              }
               icon="document"
               onClick={(e) => {
                 e.preventDefault();
                 if (e.shiftKey) {
-                  return openOnSidebar(totalLines[index][":block/uid"], 'outline');
+                  return openOnSidebar(
+                    totalLines[index][":block/uid"],
+                    "outline"
+                  );
                 }
                 operated.current = true;
                 props.onChange(`[[${totalLines[index][":node/title"]}]]`);
@@ -173,11 +185,11 @@ export function initToolbar(switches: { smartblocks: boolean }) {
           <MenuItem
             style={style}
             icon="dot"
-            text={<SearchBlockItem block={totalLines[index]} />}
+            text={<SearchBlockItem block={totalLines[index]} highlight={props.text} />}
             onClick={(e) => {
               e.preventDefault();
               if (e.shiftKey) {
-                return openOnSidebar(totalLines[index][':block/uid'], 'block')
+                return openOnSidebar(totalLines[index][":block/uid"], "block");
               }
               operated.current = true;
               props.onChange(`((${totalLines[index][":block/uid"]}))`);
