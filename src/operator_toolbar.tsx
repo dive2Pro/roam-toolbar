@@ -10,10 +10,8 @@ import {
   Menu,
   MenuItem,
   Popover,
-  Divider,
   Classes,
   CollapsibleList,
-  OverflowList,
   MenuItemProps,
 } from "@blueprintjs/core";
 import React, { useEffect, useRef, useState } from "react";
@@ -80,7 +78,7 @@ const isStartAndEndWith = (
   return -1;
 };
 
-function SearchBlockItem(props: { block: PullBlock, highlight: string }) {
+function SearchBlockItem(props: { block: PullBlock; highlight: string }) {
   const [parents, setParents] = useState([]);
   useEffect(() => {
     const v = getParentsStringFromBlockUid(props.block[":block/uid"]);
@@ -156,7 +154,7 @@ export function initToolbar(switches: { smartblocks: boolean }) {
         });
         setTimeout(() => {
           unmount();
-        }, 250)
+        }, 250);
       };
       const Row = ({ index, style }: { index: number; style: object }) => {
         if (index <= pages.length - 1) {
@@ -188,7 +186,12 @@ export function initToolbar(switches: { smartblocks: boolean }) {
           <MenuItem
             style={style}
             icon="dot"
-            text={<SearchBlockItem block={totalLines[index]} highlight={props.text} />}
+            text={
+              <SearchBlockItem
+                block={totalLines[index]}
+                highlight={props.text}
+              />
+            }
             onClick={(e) => {
               e.preventDefault();
               if (e.shiftKey) {
@@ -231,7 +234,7 @@ export function initToolbar(switches: { smartblocks: boolean }) {
         >
           <Button
             icon="search"
-            intent={isOpen ? 'primary' : 'none'}
+            intent={isOpen ? "primary" : "none"}
             onClick={() => {
               setData(search());
               setOpen(true);
@@ -241,9 +244,9 @@ export function initToolbar(switches: { smartblocks: boolean }) {
       );
     }
     function Smartblocks(props: { uid: string }) {
-      const [workflows] = useState(() => {
-        return getVisibleCustomWorkflows();
-      });
+      const [workflows, setWorkflows] = useState<
+        { uid: string; name: string }[]
+      >([]);
 
       const [activeIndex, setActiveIndex] = useState(-1);
       const onSelect = (i: number) => {
@@ -251,10 +254,10 @@ export function initToolbar(switches: { smartblocks: boolean }) {
           srcName: workflows[i].name,
           targetUid: props.uid,
         });
-        setTimeout(() => { 
+        setTimeout(() => {
           onClose();
-          unmount()
-        } , 350)
+          unmount();
+        }, 350);
       };
       const [isOpen, setOpen] = useState(false);
       const onClose = () => setOpen(false);
@@ -294,9 +297,6 @@ export function initToolbar(switches: { smartblocks: boolean }) {
           listeningEl.removeEventListener("keydown", keydownListener);
         };
       }, [menuRef.current]);
-      if (workflows.length <= 0) {
-        return null;
-      }
 
       return (
         <Popover
@@ -310,54 +310,66 @@ export function initToolbar(switches: { smartblocks: boolean }) {
           position={Position.BOTTOM_LEFT}
           autoFocus={false}
           content={
-            <Menu
-              className="roamjs-smartblock-menu"
-              ref={menuRef}
-              style={{
-                maxHeight: 350,
-                overflowY: "auto",
-              }}
-            >
-              {workflows.map((wf, i) => {
-                return (
-                  <MenuItem
-                    key={wf.uid}
-                    data-uid={wf.uid}
-                    data-name={wf.name}
-                    text={
-                      <>
-                        <img
-                          src={
-                            PREDEFINED_REGEX.test(wf.uid)
-                              ? "https://raw.githubusercontent.com/dvargas92495/roamjs-smartblocks/main/src/img/gear.png"
-                              : "https://raw.githubusercontent.com/dvargas92495/roamjs-smartblocks/main/src/img/lego3blocks.png"
-                          }
-                          alt={""}
-                          width={15}
-                          style={{ marginRight: 4 }}
-                        />
-                        {wf.name
-                          .split(/<b>(.*?)<\/b>/)
-                          .map((part, i) =>
-                            i % 2 === 1 ? (
-                              <b key={i}>{part}</b>
-                            ) : (
-                              <span key={i}>{part}</span>
-                            )
-                          )}
-                      </>
-                    }
-                    active={i === activeIndex}
-                    onMouseEnter={() => setActiveIndex(i)}
-                    onClick={() => onSelect(i)}
-                  />
-                );
-              })}
-            </Menu>
+            workflows.length ? (
+              <Menu
+                className="roamjs-smartblock-menu"
+                ref={menuRef}
+                style={{
+                  maxHeight: 350,
+                  overflowY: "auto",
+                }}
+              >
+                {workflows.map((wf, i) => {
+                  return (
+                    <MenuItem
+                      key={wf.uid}
+                      data-uid={wf.uid}
+                      data-name={wf.name}
+                      text={
+                        <>
+                          <img
+                            src={
+                              PREDEFINED_REGEX.test(wf.uid)
+                                ? "https://raw.githubusercontent.com/dvargas92495/roamjs-smartblocks/main/src/img/gear.png"
+                                : "https://raw.githubusercontent.com/dvargas92495/roamjs-smartblocks/main/src/img/lego3blocks.png"
+                            }
+                            alt={""}
+                            width={15}
+                            style={{ marginRight: 4 }}
+                          />
+                          {wf.name
+                            .split(/<b>(.*?)<\/b>/)
+                            .map((part, i) =>
+                              i % 2 === 1 ? (
+                                <b key={i}>{part}</b>
+                              ) : (
+                                <span key={i}>{part}</span>
+                              )
+                            )}
+                        </>
+                      }
+                      active={i === activeIndex}
+                      onMouseEnter={() => setActiveIndex(i)}
+                      onClick={() => onSelect(i)}
+                    />
+                  );
+                })}
+              </Menu>
+            ) : (
+              <div style={{ padding: 16, textAlign: 'center' }}>
+                <div>
+                  <Icon icon="search" size={16} />
+                </div>
+                {"No custom smartblock"}
+              </div>
+            )
           }
         >
           <Button
-            onClick={() => setOpen(true)}
+            onClick={() => {
+              setOpen(true);
+              setWorkflows(getVisibleCustomWorkflows());
+            }}
             icon={
               <img
                 src="https://raw.githubusercontent.com/8bitgentleman/roam-depot-mobile-bottombar/main/icon.png"
