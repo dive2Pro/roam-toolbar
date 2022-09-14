@@ -14,8 +14,28 @@
 }
 
 .search-block-item .bp3-collapse-list.bp3-breadcrumbs li span{
-    max-width: 120px;
+    max-width: 140px;
     display: block;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+
+
+.ellipsis {
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.ellipsis span {
+  display: inline-block;
+  vertical-align: top;
+  line-height: 20px;
+}
+.ellipsis-to-left {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  direction: rtl;
+  text-align: left;
 }

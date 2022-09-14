@@ -154,6 +154,9 @@ export function initToolbar(switches: { smartblocks: boolean }) {
             type,
           },
         });
+        setTimeout(() => {
+          unmount();
+        }, 250)
       };
       const Row = ({ index, style }: { index: number; style: object }) => {
         if (index <= pages.length - 1) {
@@ -200,6 +203,7 @@ export function initToolbar(switches: { smartblocks: boolean }) {
       return (
         <Popover
           isOpen={isOpen}
+          autoFocus={false}
           onClose={() => {
             setOpen(false);
             setTimeout(() => {
@@ -214,7 +218,7 @@ export function initToolbar(switches: { smartblocks: boolean }) {
               <div></div>
               <Menu>
                 <List
-                  height={Math.min(550, totalLines.length * 60)}
+                  height={Math.min(450, totalLines.length * 60)}
                   itemCount={blocks.length + pages.length}
                   itemSize={(index) => (index < pages.length ? 35 : 60)}
                   width={500}
@@ -227,6 +231,7 @@ export function initToolbar(switches: { smartblocks: boolean }) {
         >
           <Button
             icon="search"
+            intent={isOpen ? 'primary' : 'none'}
             onClick={() => {
               setData(search());
               setOpen(true);
@@ -246,6 +251,10 @@ export function initToolbar(switches: { smartblocks: boolean }) {
           srcName: workflows[i].name,
           targetUid: props.uid,
         });
+        setTimeout(() => { 
+          onClose();
+          unmount()
+        } , 350)
       };
       const [isOpen, setOpen] = useState(false);
       const onClose = () => setOpen(false);

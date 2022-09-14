@@ -1,8 +1,8 @@
-import { initToolbar } from "./OperatorToolbar";
+import { initToolbar } from "./operator_toolbar";
 import "./style.css"
 
 const switches = {
-  smartblocks: true,
+  smartblocks: false,
 };
 let initial = (extensionAPI: any) => {
   const panelConfig = {
@@ -22,8 +22,9 @@ let initial = (extensionAPI: any) => {
       },
     ],
   };
+  
   extensionAPI.settings.panel.create(panelConfig);
-  extensionAPI.settings.set('smartblock-workflow', true);
+  switches.smartblocks = extensionAPI.settings.get('smartblock-workflow');
   const toolbarUnload = initToolbar(switches);
   return () => {
     toolbarUnload();
