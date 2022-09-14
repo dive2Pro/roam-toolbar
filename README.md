@@ -2,18 +2,18 @@
 
 ## search by selection
 
-![](search.gif)
+![search.gif](https://github.com/dive2Pro/roam-toolbar/blob/main/search.gif)
 
 ## smartblocks
 
 1. open config
-2. ![](smart%20blocks%20config.jpeg)
+2. ![smart%20blocks%20config.jpeg](https://github.com/dive2Pro/roam-toolbar/blob/main/smart%20blocks%20config.jpeg)
 
 
 **for now, only works with custom smartblocks**
 
 
-![](smart%20blocks.gif)
+![smart%20blocks.gif](https://github.com/dive2Pro/roam-toolbar/blob/main/smart%20blocks.gif)
 
 
 ## style selection
