@@ -45,6 +45,16 @@ const useEvent = <T, K>(cb: (...args: T[]) => K) => {
 const INPUT_SELECTOR = "textarea.rm-block-input";
 const KEYS = [..."*_^~`[]()".split("")];
 
+const NoFound = (props: { children: any }) => {
+  return (
+    <div style={{ padding: 16, textAlign: "center" }}>
+      <div>
+        <Icon icon="search" size={16} />
+      </div>
+      {props.children}
+    </div>
+  );
+};
 const isIntent = (b: boolean, target = "primary"): Intent =>
   (b ? target : "none") as Intent;
 
@@ -131,9 +141,13 @@ export function initToolbar(switches: { smartblocks: boolean }) {
       const [isOpen, setOpen] = useState(false);
       const search = () => {
         return {
-          blocks: searchBlocksBy(props.text).map((uid) => {
-            return window.roamAlphaAPI.pull("[*]", [":block/uid", uid]);
-          }),
+          blocks: searchBlocksBy(props.text)
+            .filter((uid) => {
+              return uid !== block[":block/uid"];
+            })
+            .map((uid) => {
+              return window.roamAlphaAPI.pull("[*]", [":block/uid", uid]);
+            }),
           pages: searchPagesBy(props.text).map((uid) => {
             return window.roamAlphaAPI.pull("[*]", [":block/uid", uid]);
           }),
@@ -217,19 +231,25 @@ export function initToolbar(switches: { smartblocks: boolean }) {
             }, 100);
           }}
           content={
-            <section>
-              <div></div>
-              <Menu>
-                <List
-                  height={Math.min(450, totalLines.length * 60)}
-                  itemCount={blocks.length + pages.length}
-                  itemSize={(index) => (index < pages.length ? 35 : 60)}
-                  width={500}
-                >
-                  {Row}
-                </List>
-              </Menu>
-            </section>
+            totalLines.length ? (
+              <section>
+                <div></div>
+                <Menu>
+                  <List
+                    height={Math.min(450, totalLines.length * 60)}
+                    itemCount={blocks.length + pages.length}
+                    itemSize={(index) => (index < pages.length ? 35 : 60)}
+                    width={500}
+                  >
+                    {Row}
+                  </List>
+                </Menu>
+              </section>
+            ) : (
+                <NoFound>
+                  No references
+              </NoFound>
+            )
           }
         >
           <Button
@@ -284,7 +304,7 @@ export function initToolbar(switches: { smartblocks: boolean }) {
         } else {
         }
         requestIdleCallback(() => {
-          document.querySelector(".bp3-active").scrollIntoView({
+          document.querySelector(".bp3-active")?.scrollIntoView({
             block: "nearest",
           });
         });
@@ -356,12 +376,7 @@ export function initToolbar(switches: { smartblocks: boolean }) {
                 })}
               </Menu>
             ) : (
-              <div style={{ padding: 16, textAlign: 'center' }}>
-                <div>
-                  <Icon icon="search" size={16} />
-                </div>
-                {"No custom smartblock"}
-              </div>
+              <NoFound>No custom smartblock</NoFound>
             )
           }
         >
