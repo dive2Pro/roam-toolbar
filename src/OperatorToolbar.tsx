@@ -99,7 +99,7 @@ function SearchBlockItem(props: { block: PullBlock }) {
           <MenuItem text={str} />
         ))}
       </CollapsibleList>
-      ((B)) ${props.block[":block/string"]}
+      {props.block[":block/string"]}
     </div>
   );
 }
@@ -143,14 +143,26 @@ export function initToolbar(switches: { smartblocks: boolean }) {
       });
       const totalLines = [...pages, ...blocks];
       const operated = useRef(false);
+      const openOnSidebar = (uid: string, type: 'outline' | 'block') => {
+        window.roamAlphaAPI.ui.rightSidebar.addWindow({
+          window: {
+              "block-uid": uid,
+              type
+          }
+        })
+      }
       const Row = ({ index, style }: { index: number; style: object }) => {
         if (index <= pages.length - 1) {
           return (
             <MenuItem
               style={style}
-              text={`[[P]] ${totalLines[index][":node/title"]} `}
-              prefix="P"
-              onClick={() => {
+              text={`${totalLines[index][":node/title"]} `}
+              icon="document"
+              onClick={(e) => {
+                e.preventDefault();
+                if (e.shiftKey) {
+                  return openOnSidebar(totalLines[index][":block/uid"], 'outline');
+                }
                 operated.current = true;
                 props.onChange(`[[${totalLines[index][":node/title"]}]]`);
               }}
@@ -160,9 +172,13 @@ export function initToolbar(switches: { smartblocks: boolean }) {
         return (
           <MenuItem
             style={style}
-            prefix="P"
+            icon="dot"
             text={<SearchBlockItem block={totalLines[index]} />}
-            onClick={() => {
+            onClick={(e) => {
+              e.preventDefault();
+              if (e.shiftKey) {
+                return openOnSidebar(totalLines[index][':block/uid'], 'block')
+              }
               operated.current = true;
               props.onChange(`((${totalLines[index][":block/uid"]}))`);
             }}
@@ -186,7 +202,7 @@ export function initToolbar(switches: { smartblocks: boolean }) {
               <div></div>
               <Menu>
                 <List
-                  height={550}
+                  height={Math.min(550, totalLines.length * 60)}
                   itemCount={blocks.length + pages.length}
                   itemSize={(index) => (index < pages.length ? 35 : 60)}
                   width={500}
