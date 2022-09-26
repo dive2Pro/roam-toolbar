@@ -88,6 +88,18 @@ const isStartAndEndWith = (
   return -1;
 };
 
+const removeFormat = (source: string, position: number) =>
+  source
+    .split("")
+    .filter((s, i, origin) => {
+      return !(
+        position === i ||
+        (i > position && i < position + length) ||
+        (i >= origin.length - position - length && i < origin.length - position)
+      );
+    })
+    .join("");
+
 function SearchBlockItem(props: { block: PullBlock; highlight: string }) {
   const [parents, setParents] = useState([]);
   useEffect(() => {
@@ -127,7 +139,6 @@ export function initToolbar(switches: { smartblocks: boolean }) {
     let { selectionStart, selectionEnd } = t;
 
     const reFocus = async (position = [selectionStart, selectionEnd]) => {
-      console.log(position, " ---");
       await window.roamAlphaAPI.ui.setBlockFocusAndSelection({
         location: focusedBlock,
         selection: {
@@ -225,7 +236,6 @@ export function initToolbar(switches: { smartblocks: boolean }) {
             setOpen(false);
             setTimeout(() => {
               if (!operated.current) {
-                reFocus(prevSelection);
               }
               operated.current = false;
             }, 100);
@@ -246,9 +256,7 @@ export function initToolbar(switches: { smartblocks: boolean }) {
                 </Menu>
               </section>
             ) : (
-                <NoFound>
-                  No references
-              </NoFound>
+              <NoFound>No references</NoFound>
             )
           }
         >
@@ -417,6 +425,7 @@ export function initToolbar(switches: { smartblocks: boolean }) {
         };
 
         const activeIndex = isStartAndEndWith(source, tag, length);
+
         const isActive = activeIndex !== -1;
         const affix = new Array(length).fill(tag).join("");
         return {
@@ -425,6 +434,7 @@ export function initToolbar(switches: { smartblocks: boolean }) {
             isActive
               ? unstyle()
               : props.onAfter(`${affix}${props.text}${affix}`);
+            reFocus();
           },
         };
       };
@@ -472,6 +482,36 @@ export function initToolbar(switches: { smartblocks: boolean }) {
       const toPlain = () => {
         unHeader();
         unQuotation();
+      };
+
+      const PageTransform = () => {
+        const index = isStartAndEndWith(props.text, ["[", "]"]);
+        const pageUnbracket =
+          index > -1 ? (
+            <>
+              <Tooltip content="Un Bracket">
+                <Button
+                  onClick={() => {
+                    props.onAfter(removeFormat(props.text, index));
+                  }}
+                  icon="square"
+                ></Button>
+              </Tooltip>
+            </>
+          ) : null;
+        return (
+          <>
+            {pageUnbracket}
+            <Tooltip content="Page Bracket">
+              <Button
+                onClick={() => {
+                  props.onAfter(`[[${props.text}]]`);
+                }}
+                icon="array"
+              ></Button>
+            </Tooltip>
+          </>
+        );
       };
 
       const EmbedTransform = () => {
@@ -559,7 +599,6 @@ export function initToolbar(switches: { smartblocks: boolean }) {
         <ButtonGroup>
           <Popover
             interactionKind="click"
-            onClosed={() => reFocus()}
             content={
               <>
                 <Menu>
@@ -569,6 +608,7 @@ export function initToolbar(switches: { smartblocks: boolean }) {
                     intent={isIntent(isPlain())}
                     onClick={() => {
                       toPlain();
+                      unmount();
                     }}
                     active={isPlain()}
                   />
@@ -577,6 +617,7 @@ export function initToolbar(switches: { smartblocks: boolean }) {
                     text={"H1"}
                     onClick={() => {
                       headering(1);
+                      unmount();
                     }}
                     active={isHeading(1)}
                   />
@@ -586,19 +627,26 @@ export function initToolbar(switches: { smartblocks: boolean }) {
                     active={isHeading(2)}
                     onClick={() => {
                       headering(2);
+                      unmount();
                     }}
                   />
                   <MenuItem
                     active={isHeading(3)}
                     icon="header-three"
                     text="H3"
-                    onClick={() => headering(3)}
+                    onClick={() => {
+                      headering(3);
+                      unmount();
+                    }}
                   />
                   <MenuItem
                     active={isQuotation()}
                     icon="citation"
                     text="Quote"
-                    onClick={() => quotation()}
+                    onClick={() => {
+                      quotation();
+                      unmount();
+                    }}
                   />
                 </Menu>
               </>
@@ -620,6 +668,7 @@ export function initToolbar(switches: { smartblocks: boolean }) {
               <Icon icon="chevron-down" size={14} style={{ color: "grey" }} />
             </Button>
           </Popover>
+          <PageTransform />
           <EmbedTransform />
           <PathEmbedTransform />
           <Tooltip content={"highlight"} position={Position.TOP}>
