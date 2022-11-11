@@ -786,6 +786,7 @@ export function initToolbar(switches: { smartblocks: boolean }) {
   };
   const el = document.createElement("div");
   el.style.position = "fixed";
+  el.style.zIndex = "9";
   document.body.appendChild(el);
   document.arrive(INPUT_SELECTOR, start);
   const stopFactory = () => {
