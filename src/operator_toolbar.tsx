@@ -133,11 +133,12 @@ export function initToolbar(switches: { smartblocks: boolean }) {
   console.log("initToolbar");
   let selection = window.getSelection();
   let prevSelection: [number, number];
-  const start = (t: HTMLInputElement) => {
+  const start = (input: HTMLInputElement) => {
     stop();
+    let prevValue = "";
     // el.style.display = 'flex'
-    let { selectionStart, selectionEnd } = t;
-
+    let { selectionStart, selectionEnd } = input;
+    console.log("start --- ");
     const reFocus = async (position = [selectionStart, selectionEnd]) => {
       await window.roamAlphaAPI.ui.setBlockFocusAndSelection({
         location: focusedBlock,
@@ -431,10 +432,12 @@ export function initToolbar(switches: { smartblocks: boolean }) {
         return {
           isActive,
           toggle: (e: React.MouseEvent) => {
+            e.stopPropagation();
+
             isActive
               ? unstyle()
               : props.onAfter(`${affix}${props.text}${affix}`);
-            reFocus();
+            // reFocus();
           },
         };
       };
@@ -454,17 +457,13 @@ export function initToolbar(switches: { smartblocks: boolean }) {
         }
       };
       const quotation = async () => {
-        let content = t.value;
+        let content = input.value;
         if (isQuotation()) {
           content = content.substring(2);
-          selectionStart -= 2;
-          selectionEnd -= 2;
         } else {
           content = `> ${content}`;
-          selectionStart += 2;
-          selectionEnd += 2;
         }
-        await updateStr(block[":block/uid"], content);
+        prevValue = content;
       };
       const headering = async (heading: number) => {
         if (isHeading(heading)) {
@@ -491,7 +490,8 @@ export function initToolbar(switches: { smartblocks: boolean }) {
             <>
               <Tooltip content="Un Bracket">
                 <Button
-                  onClick={() => {
+                  onClickCapture={(e) => {
+                    e.stopPropagation();
                     props.onAfter(removeFormat(props.text, index));
                   }}
                   icon="square"
@@ -504,7 +504,8 @@ export function initToolbar(switches: { smartblocks: boolean }) {
             {pageUnbracket}
             <Tooltip content="Page Bracket">
               <Button
-                onClick={() => {
+                onClickCapture={(e) => {
+                  e.stopPropagation();
                   props.onAfter(`[[${props.text}]]`);
                 }}
                 icon="array"
@@ -523,7 +524,8 @@ export function initToolbar(switches: { smartblocks: boolean }) {
             <Tooltip content="Block Embed">
               <Button
                 icon="new-layers"
-                onClick={() => {
+                onClickCapture={(e) => {
+                  e.stopPropagation();
                   props.onAfter(`{{[[embed]]: ${props.text}}}`);
                 }}
               ></Button>
@@ -544,7 +546,8 @@ export function initToolbar(switches: { smartblocks: boolean }) {
           <Tooltip content="Block Reference">
             <Button
               icon="layer"
-              onClick={() => {
+              onClickCapture={(e) => {
+                e.stopPropagation();
                 const index = props.text.indexOf(":");
                 props.onAfter(
                   props.text.substring(index + 1, props.text.length - 2).trim()
@@ -562,7 +565,8 @@ export function initToolbar(switches: { smartblocks: boolean }) {
             <Tooltip content="Block Embed Path">
               <Button
                 icon="new-layer"
-                onClick={() => {
+                onClickCapture={(e) => {
+                  e.stopPropagation();
                   props.onAfter(`{{[[embed-path]]: ${props.text}}}`);
                 }}
               ></Button>
@@ -584,7 +588,8 @@ export function initToolbar(switches: { smartblocks: boolean }) {
           <Tooltip content="Block Reference">
             <Button
               icon="layer"
-              onClick={() => {
+              onClick={(e) => {
+                e.stopPropagation();
                 const index = props.text.indexOf(":");
                 props.onAfter(
                   props.text.substring(index + 1, props.text.length - 2).trim()
@@ -596,9 +601,10 @@ export function initToolbar(switches: { smartblocks: boolean }) {
       };
 
       return (
-        <ButtonGroup>
+        <ButtonGroup className="rm-toolbar">
           <Popover
-            interactionKind="click"
+            interactionKind="hover"
+            autoFocus={false}
             content={
               <>
                 <Menu>
@@ -606,7 +612,7 @@ export function initToolbar(switches: { smartblocks: boolean }) {
                     icon="paragraph"
                     text="text"
                     intent={isIntent(isPlain())}
-                    onClick={() => {
+                    onClick={(e) => {
                       toPlain();
                       unmount();
                     }}
@@ -653,6 +659,9 @@ export function initToolbar(switches: { smartblocks: boolean }) {
             }
           >
             <Button
+              onClick={(e) => {
+                e.stopPropagation()
+              }}
               icon={
                 isHeading(1)
                   ? "header-one"
@@ -680,7 +689,7 @@ export function initToolbar(switches: { smartblocks: boolean }) {
           </Tooltip>
           <Tooltip content={"bold"} position={Position.TOP}>
             <Button
-              onClick={boldingToggle.toggle}
+              onClickCapture={boldingToggle.toggle}
               intent={isIntent(boldingToggle.isActive)}
               icon="bold"
             />
@@ -732,7 +741,7 @@ export function initToolbar(switches: { smartblocks: boolean }) {
       return block[":block/heading"] === undefined && !isQuotation();
     };
     const changeElPosition = () => {
-      const xy = getCursorXY(t, [t.selectionStart, t.selectionEnd]);
+      const xy = getCursorXY(input, [input.selectionStart, input.selectionEnd]);
       el.style.top = xy.y + 5 + "px";
       el.style.left = xy.x - 0 + "px";
     };
@@ -743,44 +752,67 @@ export function initToolbar(switches: { smartblocks: boolean }) {
       if (e.composed) {
         return;
       }
-      ({ selectionStart, selectionEnd } = t);
-      const text = selection.toString();
-      if (selectionStart === selectionEnd || !t || !text) {
+
+      ({ selectionStart, selectionEnd } = input);
+      let text = selection.toString();
+      if (selectionStart === selectionEnd || !input || !text) {
         unmount();
         return;
       }
       prevSelection = [selectionStart, selectionEnd];
       changeElPosition();
-      const fullContent = t.value;
+      const render = () => {
+        const fullContent = input.value;
+        ReactDOM.render(
+          <Toolbar
+            text={text}
+            onAfter={async (text, selection = { start: 0, end: 0 }) => {
+              const afterString =
+                fullContent.substring(0, selectionStart) +
+                text +
+                fullContent.substring(selectionEnd);
+              input.value = afterString;
 
-      ReactDOM.render(
-        <Toolbar
-          text={text}
-          onAfter={async (text, selection = { start: 0, end: 0 }) => {
-            const afterString =
-              fullContent.substring(0, selectionStart) +
-              text +
-              fullContent.substring(selectionEnd);
+              input.setSelectionRange(
+                selectionStart + selection.start,
+                selectionStart + text.length + selection.end
+              );
+              input.focus();
+              prevValue = afterString;
+              console.log(
+                selection,
+                text,
+                selectionStart,
+                " = input",
+                selectionStart + selection.start,
+                selectionStart + text.length + selection.end
+              );
 
-            setTimeout(async () => {
-              await updateStr(focusedBlock["block-uid"], afterString);
-              await delay(10);
-              await window.roamAlphaAPI.ui.setBlockFocusAndSelection({
-                location: focusedBlock,
-                selection: {
-                  start: selectionStart + selection.start,
-                  end: selectionStart + text.length + selection.end,
-                },
-              });
-            });
-          }}
-        />,
-        el
-      );
+              // render();
+
+              // setTimeout(async () => {
+              //   await delay(10);
+              //   await window.roamAlphaAPI.ui.setBlockFocusAndSelection({
+              //     location: focusedBlock,
+              //     selection: {
+              //       start: selectionStart + selection.start,
+              //       end: selectionStart + text.length + selection.end,
+              //     },
+              //   });
+              // });
+            }}
+          />,
+          el
+        );
+      };
+      render();
     };
     document.addEventListener("selectionchange", onSelectionChange);
-    stop = () => {
+
+    stop = async () => {
       selectionStart = selectionEnd = 0;
+      if (prevValue) await updateStr(block[":block/uid"], prevValue);
+      prevValue = "";
       document.removeEventListener("selectionchange", onSelectionChange);
     };
   };
@@ -793,12 +825,12 @@ export function initToolbar(switches: { smartblocks: boolean }) {
     // el.style.display = 'none'
     stop();
   };
-  // document.leave(INPUT_SELECTOR, stopFactory);
+  document.leave(INPUT_SELECTOR, stopFactory);
   return () => {
     try {
       stopFactory();
       document.body.removeChild(el);
-      // document.unbindLeave(INPUT_SELECTOR, stopFactory);
+      document.unbindLeave(INPUT_SELECTOR, stopFactory);
       document.unbindArrive(INPUT_SELECTOR, start);
     } catch (e) {
       console.error(e);
