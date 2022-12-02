@@ -195,13 +195,14 @@ export function initToolbar(switches: { smartblocks: boolean }) {
               }
               icon="document"
               onClick={(e) => {
-                e.preventDefault();
+                e.stopPropagation();
                 if (e.shiftKey) {
                   return openOnSidebar(
                     totalLines[index][":block/uid"],
                     "outline"
                   );
                 }
+                setOpen(false);
                 operated.current = true;
                 props.onChange(`[[${totalLines[index][":node/title"]}]]`);
               }}
@@ -220,10 +221,12 @@ export function initToolbar(switches: { smartblocks: boolean }) {
             }
             onClick={(e) => {
               e.preventDefault();
+              e.stopPropagation();
               if (e.shiftKey) {
                 return openOnSidebar(totalLines[index][":block/uid"], "block");
               }
               operated.current = true;
+              setOpen(false);
               props.onChange(`((${totalLines[index][":block/uid"]}))`);
             }}
           ></MenuItem>
@@ -264,9 +267,15 @@ export function initToolbar(switches: { smartblocks: boolean }) {
           <Button
             icon="search"
             intent={isOpen ? "primary" : "none"}
-            onClick={() => {
-              setData(search());
-              setOpen(true);
+            onClick={(e) => {
+              e.stopPropagation();
+              if (isOpen) {
+                setOpen(false);
+              } else {
+                setData(search());
+                setOpen(true);
+              }
+              input.focus();
             }}
           />
         </Popover>
@@ -660,7 +669,7 @@ export function initToolbar(switches: { smartblocks: boolean }) {
           >
             <Button
               onClick={(e) => {
-                e.stopPropagation()
+                e.stopPropagation();
               }}
               icon={
                 isHeading(1)
