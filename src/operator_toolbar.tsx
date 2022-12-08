@@ -27,7 +27,6 @@ import { getVisibleCustomWorkflows, PREDEFINED_REGEX } from "./smartblocks";
 import { VariableSizeList as List } from "react-window";
 import { PullBlock } from "roamjs-components/types";
 import { HighlightText } from "./highlight_spans";
-import dayjs from "dayjs";
 
 const delay = async (m: number) =>
   new Promise((resolve) => setTimeout(resolve, m));
