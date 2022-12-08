@@ -27,6 +27,7 @@ import { getVisibleCustomWorkflows, PREDEFINED_REGEX } from "./smartblocks";
 import { VariableSizeList as List } from "react-window";
 import { PullBlock } from "roamjs-components/types";
 import { HighlightText } from "./highlight_spans";
+import dayjs from "dayjs";
 
 const delay = async (m: number) =>
   new Promise((resolve) => setTimeout(resolve, m));
@@ -133,8 +134,9 @@ export function initToolbar(switches: { smartblocks: boolean }) {
   console.log("initToolbar");
   let selection = window.getSelection();
   let prevSelection: [number, number];
-  const start = (input: HTMLInputElement) => {
+  const start = async (input: HTMLInputElement) => {
     stop();
+    await delay(10);
     let prevValue = "";
     // el.style.display = 'flex'
     let { selectionStart, selectionEnd } = input;
@@ -413,6 +415,44 @@ export function initToolbar(switches: { smartblocks: boolean }) {
         </Popover>
       );
     }
+
+    function SentToDailyNoteThenPutReferenceHere(porps: {
+      uid: string;
+      text: string;
+      onChange: (str: string) => void;
+    }) {
+      return (
+        <Tooltip
+          content={
+            "Push the selected text to the Daily Notes, and then reference it back here"
+          }
+          position={Position.BOTTOM}
+        >
+          <Button
+            icon="send-to"
+            onClick={async (e) => {
+              e.stopPropagation();
+              const uid = window.roamAlphaAPI.util.generateUID();
+              await window.roamAlphaAPI.createBlock({
+                block: {
+                  string: porps.text,
+                  uid,
+                },
+                location: {
+                  "parent-uid": window.roamAlphaAPI.util.dateToPageUid(
+                    new Date()
+                  ),
+                  order: Number.MAX_SAFE_INTEGER,
+                },
+              });
+              await delay(10);
+              porps.onChange(`((${uid}))`);
+            }}
+          />
+        </Tooltip>
+      );
+    }
+
     function Toolbar(props: {
       text: string;
       onAfter: (t: string, selection?: { start: number; end: number }) => void;
@@ -727,6 +767,11 @@ export function initToolbar(switches: { smartblocks: boolean }) {
               icon="strikethrough"
             />
           </Tooltip>
+          <SentToDailyNoteThenPutReferenceHere
+            uid={focusedBlock["block-uid"]}
+            onChange={props.onAfter}
+            text={props.text}
+          />
           {switches.smartblocks ? (
             <Smartblocks uid={focusedBlock["block-uid"]} />
           ) : null}
@@ -819,6 +864,8 @@ export function initToolbar(switches: { smartblocks: boolean }) {
     document.addEventListener("selectionchange", onSelectionChange);
 
     stop = async () => {
+      console.log(' stop')
+      unmount();
       selectionStart = selectionEnd = 0;
       if (prevValue) await updateStr(block[":block/uid"], prevValue);
       prevValue = "";
