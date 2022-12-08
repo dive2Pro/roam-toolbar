@@ -1,5 +1,6 @@
 # Roam toolbar 
 
+
 ## search by selection
 
 ![search.gif](https://github.com/dive2Pro/roam-toolbar/blob/main/search.gif)
@@ -29,23 +30,14 @@
 
 ![](https://github.com/dive2Pro/roam-toolbar/blob/main/Toolbar%20block%20transform.gif)
 
+## Port selected text to the Daily Note
+
+![](https://github.com/dive2Pro/roam-toolbar/blob/main/reference%20to%20dn.gif)
 
 # changelog
 
 - support search blocks and pages base on selection 
 - support smartblocks 
 - support selection style transforms
+- support push selected text to the Daily Note, and then referernce it back
 
-# use by [[roam/js]]
-
-```js
-    var existing = document.getElementById("roam-toolbar");
-    if (!existing) {
-    var extension = document.createElement("script");
-        extension.src = "https://unpkg.com/@dive2pro/roam-toolbar@0.0.2/build/main.js";
-        extension.id = "roam-toolbar";
-        extension.async = true;
-        extension.type = "text/javascript";
-        document.getElementsByTagName("head")[0].appendChild(extension);
-    }
-```
