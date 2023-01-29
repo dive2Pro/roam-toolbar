@@ -139,7 +139,11 @@ export function initToolbar(switches: { smartblocks: boolean }) {
     let prevValue = "";
     // el.style.display = 'flex'
     let { selectionStart, selectionEnd } = input;
-    console.log("start --- ");
+    input.addEventListener('change', e => {
+      // console.log(e, ' change')
+      prevValue = (e.target as any).value;
+    });
+
     const reFocus = async (position = [selectionStart, selectionEnd]) => {
       await window.roamAlphaAPI.ui.setBlockFocusAndSelection({
         location: focusedBlock,
