@@ -27,6 +27,7 @@ import { getVisibleCustomWorkflows, PREDEFINED_REGEX } from "./smartblocks";
 import { VariableSizeList as List } from "react-window";
 import { PullBlock } from "roamjs-components/types";
 import { HighlightText } from "./highlight_spans";
+import { DupliSeek } from "./dupliseek";
 
 const delay = async (m: number) =>
   new Promise((resolve) => setTimeout(resolve, m));
@@ -144,16 +145,6 @@ export function initToolbar(switches: { smartblocks: boolean }) {
       prevValue = (e.target as any).value;
     });
 
-    const reFocus = async (position = [selectionStart, selectionEnd]) => {
-      await window.roamAlphaAPI.ui.setBlockFocusAndSelection({
-        location: focusedBlock,
-        selection: {
-          start: position[0],
-          end: position[1],
-        },
-      });
-      block = getBlock(focusedBlock["block-uid"]);
-    };
     function Search(props: { text: string; onChange: (s: string) => void }) {
       const [isOpen, setOpen] = useState(false);
       const search = () => {
@@ -775,6 +766,9 @@ export function initToolbar(switches: { smartblocks: boolean }) {
             onChange={props.onAfter}
             text={props.text}
           />
+          <DupliSeek uid={focusedBlock['block-uid']} onClick={() => {
+            stop();
+          }} />
           {switches.smartblocks ? (
             <Smartblocks uid={focusedBlock["block-uid"]} />
           ) : null}
