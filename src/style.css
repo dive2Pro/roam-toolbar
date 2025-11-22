@@ -40,3 +40,32 @@
   direction: rtl;
   text-align: left;
 }
+
+
+.block-bg .bp3-menu-item{
+  padding: 5px 2px;
+}
+
+.block-bg.bp3-menu {
+  padding: 0px 2px 2px;
+}
+.block-bg .bp3-button{
+  margin: 2px 0px;
+}
+
+
+.bp3-intent-primary.block-highlight-blue {
+  background-color: #7cccff;
+}
+
+.bp3-intent-success.block-highlight-blue {
+  background-color: #7cccff;
+}
+
+.bp3-intent-warning.block-highlight-blue {
+  background-color: #7cccff;
+}
+
+.bp3-intent-danger.block-highlight-blue {
+  background-color: #7cccff;
+}

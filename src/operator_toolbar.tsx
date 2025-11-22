@@ -13,6 +13,7 @@ import {
   Classes,
   CollapsibleList,
   MenuItemProps,
+  Divider,
 } from "@blueprintjs/core";
 import React, { useEffect, useRef, useState } from "react";
 import { getCursorXY } from "./getCursorXY";
@@ -28,6 +29,7 @@ import { VariableSizeList as List } from "react-window";
 import { PullBlock } from "roamjs-components/types";
 import { HighlightText } from "./highlight_spans";
 import { DupliSeek } from "./dupliseek";
+import { BlockBg } from "./block-bg";
 
 const delay = async (m: number) =>
   new Promise((resolve) => setTimeout(resolve, m));
@@ -140,7 +142,7 @@ export function initToolbar(switches: { smartblocks: boolean }) {
     let prevValue = "";
     // el.style.display = 'flex'
     let { selectionStart, selectionEnd } = input;
-    input.addEventListener('change', e => {
+    input.addEventListener("change", (e) => {
       // console.log(e, ' change')
       prevValue = (e.target as any).value;
     });
@@ -275,6 +277,109 @@ export function initToolbar(switches: { smartblocks: boolean }) {
             }}
           />
         </Popover>
+      );
+    }
+
+    function StyleEraser(props: {
+      text: string;
+      onChange: (text: string) => void;
+    }) {
+      // 检查文本中是否包含任何样式标记
+      const hasStyles = (text: string): boolean => {
+        return (
+          // 检查嵌入标记
+          /\{\{(\[\[)?embed(-path)?(\]\])?:?\s*([^}]+)\}\}/.test(text) ||
+          // 检查页面链接标记
+          /\[\[([^\]]+)\]\]/.test(text) ||
+          // 检查块引用标记
+          /\(\(([^)]+)\)\)/.test(text) ||
+          // 检查高亮标记
+          /\^{2}([^^]+)\^{2}/.test(text) ||
+          // 检查粗体标记
+          /\*{2}([^*]+)\*{2}/.test(text) ||
+          // 检查斜体标记
+          /_{2}([^_]+)_{2}/.test(text) ||
+          // 检查删除线标记
+          /~{2}([^~]+)~{2}/.test(text) ||
+          // 检查代码标记
+          /`([^`]+)`/.test(text) ||
+          // 检查引用标记（多行模式）
+          /^>\s*/m.test(text)
+        );
+      };
+
+      const removeAllStyles = (text: string): string => {
+        let result = text;
+        let previousResult = "";
+
+        // 循环处理直到没有更多标记被移除（处理嵌套情况）
+        while (result !== previousResult) {
+          previousResult = result;
+
+          // 移除嵌入标记 {{embed: ...}} 或 {{[[embed]]: ...}} 或 {{[[embed-path]]: ...}}
+          result = result.replace(
+            /\{\{(\[\[)?embed(-path)?(\]\])?:?\s*([^}]+)\}\}/g,
+            (match, p1, p2, p3, content) => {
+              return content.trim();
+            }
+          );
+
+          // 移除页面链接标记 [[...]]
+          result = result.replace(/\[\[([^\]]+)\]\]/g, (match, content) => {
+            return content;
+          });
+
+          // 移除块引用标记 ((...))
+          result = result.replace(/\(\(([^)]+)\)\)/g, (match, content) => {
+            return content;
+          });
+
+          // 移除高亮标记 ^^...^^ (两个插入符号)
+          result = result.replace(/\^{2}([^^]+)\^{2}/g, (match, content) => {
+            return content;
+          });
+
+          // 移除粗体标记 **...** (两个星号)
+          result = result.replace(/\*{2}([^*]+)\*{2}/g, (match, content) => {
+            return content;
+          });
+
+          // 移除斜体标记 __...__ (两个下划线)
+          result = result.replace(/_{2}([^_]+)_{2}/g, (match, content) => {
+            return content;
+          });
+
+          // 移除删除线标记 ~~...~~ (两个波浪号)
+          result = result.replace(/~{2}([^~]+)~{2}/g, (match, content) => {
+            return content;
+          });
+
+          // 移除代码标记 `...` (单个反引号)
+          result = result.replace(/`([^`]+)`/g, (match, content) => {
+            return content;
+          });
+        }
+
+        // 移除引用标记 > (仅在行首)
+        result = result.replace(/^>\s*/gm, "");
+
+        return result;
+      };
+
+      const hasActiveStyles = hasStyles(props.text);
+
+      return (
+        <Tooltip content={"style eraser"} position={Position.TOP}>
+          <Button
+            intent={isIntent(hasActiveStyles)}
+            icon="eraser"
+            onClick={(e) => {
+              e.stopPropagation();
+              const cleanedText = removeAllStyles(props.text);
+              props.onChange(cleanedText);
+            }}
+          />
+        </Tooltip>
       );
     }
     function Smartblocks(props: { uid: string }) {
@@ -417,9 +522,7 @@ export function initToolbar(switches: { smartblocks: boolean }) {
     }) {
       return (
         <Tooltip
-          content={
-            "Push the selected text to the Daily Notes, and then reference it back here"
-          }
+          content={"Send selection to Daily Notes and leave a block reference"}
           position={Position.BOTTOM}
         >
           <Button
@@ -535,7 +638,11 @@ export function initToolbar(switches: { smartblocks: boolean }) {
                 <Button
                   onClickCapture={(e) => {
                     e.stopPropagation();
-                    props.onAfter(removeFormat(props.text, index));
+                    const afterText = props.text.replace(
+                      /^\[\[(.+)\]\]/g,
+                      "$1"
+                    );
+                    props.onAfter(afterText);
                   }}
                   icon="square"
                 ></Button>
@@ -761,18 +868,24 @@ export function initToolbar(switches: { smartblocks: boolean }) {
               icon="strikethrough"
             />
           </Tooltip>
+          <StyleEraser text={props.text} onChange={props.onAfter} />
+          {/* <BlockBg uid={focusedBlock["block-uid"]} /> */}
           <SentToDailyNoteThenPutReferenceHere
             uid={focusedBlock["block-uid"]}
             onChange={props.onAfter}
             text={props.text}
           />
-          <DupliSeek uid={focusedBlock['block-uid']} onClick={() => {
-            stop();
-          }} />
+          {/* <DupliSeek
+            uid={focusedBlock["block-uid"]}
+            onClick={() => {
+              stop();
+            }}
+          /> */}
+
           {switches.smartblocks ? (
             <Smartblocks uid={focusedBlock["block-uid"]} />
           ) : null}
-          {<Search text={props.text} onChange={props.onAfter} />}
+          {/* {<Search text={props.text} onChange={props.onAfter} />} */}
         </ButtonGroup>
       );
     }
@@ -861,7 +974,7 @@ export function initToolbar(switches: { smartblocks: boolean }) {
     document.addEventListener("selectionchange", onSelectionChange);
 
     stop = async () => {
-      console.log(' stop')
+      console.log(" stop");
       unmount();
       selectionStart = selectionEnd = 0;
       if (prevValue) await updateStr(block[":block/uid"], prevValue);
