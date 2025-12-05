@@ -1,4 +1,3 @@
-import { listenBlockChange } from "./block-bg";
 import { initToolbar } from "./operator_toolbar";
 import "./style.css"
 
@@ -27,10 +26,8 @@ let initial = (extensionAPI: any) => {
   extensionAPI.settings.panel.create(panelConfig);
   switches.smartblocks = extensionAPI.settings.get('smartblock-workflow');
   const toolbarUnload = initToolbar(switches);
-  const unsub = listenBlockChange();
   return () => {
     toolbarUnload();
-    unsub();
   };
 };
 
