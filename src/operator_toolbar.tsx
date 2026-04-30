@@ -891,6 +891,14 @@ export function initToolbar(switches: { smartblocks: boolean }) {
     }
 
     const focusedBlock = window.roamAlphaAPI.ui.getFocusedBlock();
+    // getFocusedBlock() returns null when no block is focused — happens
+    // transiently after the 10ms delay above when a slash command (/code,
+    // /h1, etc.) tears down the current textarea and focus is briefly in
+    // the slash menu. Without this guard, focusedBlock["block-uid"] throws
+    // and stop() at the top of start() has already removed the prior
+    // handlers, so the toolbar silently dies for the rest of the session.
+    // See https://github.com/dive2Pro/roam-toolbar/issues/5
+    if (!focusedBlock) return;
     let block = getBlock(focusedBlock["block-uid"]);
 
     const isHeading = (heading: number) => {
