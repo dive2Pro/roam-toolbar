@@ -977,7 +977,11 @@ export function initToolbar(switches: { smartblocks: boolean }) {
       console.log(" stop");
       unmount();
       selectionStart = selectionEnd = 0;
-      if (prevValue) await updateStr(block[":block/uid"], prevValue);
+      if (prevValue) {
+        if(!prevValue.startsWith("/code")) {
+          await updateStr(block[":block/uid"], prevValue);
+        }
+      }
       prevValue = "";
       document.removeEventListener("selectionchange", onSelectionChange);
     };
