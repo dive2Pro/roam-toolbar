@@ -34,7 +34,15 @@
 
 ![](https://github.com/dive2Pro/roam-toolbar/raw/main/reference%20to%20dn.gif)
 
+## custom callouts
+
+Registers extra callout types for Roam's `[!type]` syntax and the callout picker. **Custom Callouts** is on by default. Optionally set **Callout Types** as comma-separated `type|color|icon` entries. Leave that blank to use `recipe`, `tip`, and `example`.
+
+Selecting text shows a callout menu that toggles `> [!type]` on the current block.
+
 # changelog
+
+- support custom callout types
 
 - support search blocks and pages base on selection 
 - support smartblocks 

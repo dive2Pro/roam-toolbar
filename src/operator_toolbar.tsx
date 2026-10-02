@@ -30,6 +30,15 @@ import { PullBlock } from "roamjs-components/types";
 import { HighlightText } from "./highlight_spans";
 import { DupliSeek } from "./dupliseek";
 import { BlockBg } from "./block-bg";
+import {
+  BUILTIN_CALLOUTS,
+  CalloutDef,
+  getCalloutType,
+  hasCalloutMarkup,
+  stripCalloutMarkup,
+  stripLeadingQuotes,
+  toggleCalloutString,
+} from "./callouts";
 
 const delay = async (m: number) =>
   new Promise((resolve) => setTimeout(resolve, m));
@@ -131,7 +140,10 @@ function SearchBlockItem(props: { block: PullBlock; highlight: string }) {
   );
 }
 
-export function initToolbar(switches: { smartblocks: boolean }) {
+export function initToolbar(switches: {
+  smartblocks: boolean;
+  callouts: CalloutDef[];
+}) {
   let stop = () => {};
   console.log("initToolbar");
   let selection = window.getSelection();
@@ -303,6 +315,8 @@ export function initToolbar(switches: { smartblocks: boolean }) {
           /~{2}([^~]+)~{2}/.test(text) ||
           // 检查代码标记
           /`([^`]+)`/.test(text) ||
+          // 检查 callout 标记 > [!type]
+          hasCalloutMarkup(text) ||
           // 检查引用标记（多行模式）
           /^>\s*/m.test(text)
         );
@@ -360,8 +374,11 @@ export function initToolbar(switches: { smartblocks: boolean }) {
           });
         }
 
+        // 移除 callout 标记 > [!type]，避免只留下 [!recipe]
+        result = stripCalloutMarkup(result);
+
         // 移除引用标记 > (仅在行首)
-        result = result.replace(/^>\s*/gm, "");
+        result = stripLeadingQuotes(result);
 
         return result;
       };
@@ -550,6 +567,96 @@ export function initToolbar(switches: { smartblocks: boolean }) {
       );
     }
 
+    function CalloutMenu() {
+      const customCallouts = (switches.callouts || []).filter(
+        (callout) =>
+          !BUILTIN_CALLOUTS.some(
+            (builtin) =>
+              builtin.type.toLowerCase() === callout.type.toLowerCase()
+          )
+      );
+      const callouts = [...BUILTIN_CALLOUTS, ...customCallouts];
+      const activeType = getCalloutType(input.value)?.toLowerCase();
+      const activeCallout = callouts.find(
+        (callout) => callout.type.toLowerCase() === activeType
+      );
+      const applyCallout = (event: React.MouseEvent, type: string) => {
+        event.stopPropagation();
+        const next = toggleCalloutString(input.value, type);
+        input.value = next;
+        input.focus();
+        const prefix = `> [!${type}]`;
+        const cursor = next.startsWith(prefix)
+          ? Math.min(prefix.length + 1, next.length)
+          : next.length;
+        input.setSelectionRange(cursor, cursor);
+        prevValue = next;
+        unmount();
+      };
+      return (
+        <Popover
+          interactionKind="hover"
+          autoFocus={false}
+          content={
+            <Menu>
+              {callouts.map((callout) => {
+                const isActive = activeType === callout.type.toLowerCase();
+                return (
+                  <MenuItem
+                    key={callout.type}
+                    text={callout.label || callout.type}
+                    active={isActive}
+                    icon={
+                      callout.iconName ? (
+                        <Icon
+                          icon={callout.iconName as any}
+                          color={isActive ? undefined : callout.color}
+                          iconSize={16}
+                        />
+                      ) : (
+                        <span style={{ color: callout.color }}>
+                          {callout.icon || "◉"}
+                        </span>
+                      )
+                    }
+                    onMouseDown={(event) => {
+                      event.preventDefault();
+                      event.stopPropagation();
+                    }}
+                    onClick={(event) => applyCallout(event, callout.type)}
+                  />
+                );
+              })}
+            </Menu>
+          }
+        >
+          <Button
+            icon={
+              activeCallout?.iconName ? (
+                <Icon
+                  icon={activeCallout.iconName as any}
+                  color={activeCallout.color}
+                  iconSize={16}
+                />
+              ) : (
+                "comment"
+              )
+            }
+            intent={isIntent(!!activeCallout)}
+            onMouseDown={(event) => {
+              event.preventDefault();
+              event.stopPropagation();
+            }}
+            onClick={(event) => {
+              event.stopPropagation();
+            }}
+          >
+            <Icon icon="chevron-down" size={14} style={{ color: "grey" }} />
+          </Button>
+        </Popover>
+      );
+    }
+
     function Toolbar(props: {
       text: string;
       onAfter: (t: string, selection?: { start: number; end: number }) => void;
@@ -604,6 +711,9 @@ export function initToolbar(switches: { smartblocks: boolean }) {
       };
       const quotation = async () => {
         let content = input.value;
+        if (getCalloutType(content)) {
+          return;
+        }
         if (isQuotation()) {
           content = content.substring(2);
         } else {
@@ -868,6 +978,7 @@ export function initToolbar(switches: { smartblocks: boolean }) {
               icon="strikethrough"
             />
           </Tooltip>
+          <CalloutMenu />
           <StyleEraser text={props.text} onChange={props.onAfter} />
           {/* <BlockBg uid={focusedBlock["block-uid"]} /> */}
           <SentToDailyNoteThenPutReferenceHere
@@ -898,7 +1009,8 @@ export function initToolbar(switches: { smartblocks: boolean }) {
     };
 
     const isQuotation = () => {
-      return block[":block/string"].startsWith(">");
+      const value = block[":block/string"] || "";
+      return value.startsWith(">") && !getCalloutType(value);
     };
 
     const isPlain = () => {
